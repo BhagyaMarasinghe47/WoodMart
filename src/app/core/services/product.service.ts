@@ -1,0 +1,193 @@
+import { Injectable } from '@angular/core';
+import { Observable, of } from 'rxjs';
+import { delay } from 'rxjs/operators';
+import { Product, Category } from '../models/product.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class ProductService {
+  private mockProducts: Product[] = [
+    {
+      id: 'p1',
+      name: 'Handcrafted Oak Dining Table',
+      description: 'Beautiful solid oak dining table with smooth finish. Seats 6-8 people comfortably.',
+      category: 'furniture',
+      wholesalePrice: 450,
+      retailPrice: 699,
+      stock: 15,
+      imageUrl: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=500',
+      craftsmanId: '2',
+      craftsmanName: 'John Carpenter',
+      createdAt: new Date('2024-01-15'),
+      isActive: true,
+      dimensions: '180cm x 90cm x 75cm',
+      material: 'Solid Oak',
+      weight: '45kg'
+    },
+    {
+      id: 'p2',
+      name: 'Wooden Picture Frame Set',
+      description: 'Set of 3 elegant wooden picture frames with vintage design.',
+      category: 'decor',
+      wholesalePrice: 25,
+      retailPrice: 45,
+      stock: 50,
+      imageUrl: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500',
+      craftsmanId: '2',
+      craftsmanName: 'John Carpenter',
+      createdAt: new Date('2024-02-01'),
+      isActive: true,
+      dimensions: '20cm x 25cm',
+      material: 'Pine Wood',
+      weight: '1kg'
+    },
+    {
+      id: 'p3',
+      name: 'Custom Wooden Bookshelf',
+      description: '5-tier bookshelf made from reclaimed wood. Eco-friendly and stylish.',
+      category: 'furniture',
+      wholesalePrice: 180,
+      retailPrice: 299,
+      stock: 8,
+      imageUrl: 'https://images.unsplash.com/photo-1594620302200-9a762244a156?w=500',
+      craftsmanId: '2',
+      craftsmanName: 'John Carpenter',
+      createdAt: new Date('2024-01-20'),
+      isActive: true,
+      dimensions: '90cm x 180cm x 30cm',
+      material: 'Reclaimed Wood',
+      weight: '35kg'
+    },
+    {
+      id: 'p4',
+      name: 'Wooden Kitchen Utensil Set',
+      description: 'Complete set of 7 handcrafted wooden kitchen utensils.',
+      category: 'kitchenware',
+      wholesalePrice: 30,
+      retailPrice: 55,
+      stock: 100,
+      imageUrl: 'https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=500',
+      craftsmanId: '2',
+      craftsmanName: 'John Carpenter',
+      createdAt: new Date('2024-02-10'),
+      isActive: true,
+      dimensions: '30cm (longest)',
+      material: 'Bamboo',
+      weight: '0.5kg'
+    },
+    {
+      id: 'p5',
+      name: 'Rustic Coffee Table',
+      description: 'Rustic style coffee table with storage compartment.',
+      category: 'furniture',
+      wholesalePrice: 120,
+      retailPrice: 199,
+      stock: 20,
+      imageUrl: 'https://images.unsplash.com/photo-1532372320572-cda25653a26d?w=500',
+      craftsmanId: '2',
+      craftsmanName: 'John Carpenter',
+      createdAt: new Date('2024-01-25'),
+      isActive: true,
+      dimensions: '120cm x 60cm x 45cm',
+      material: 'Oak & Pine',
+      weight: '25kg'
+    },
+    {
+      id: 'p6',
+      name: 'Decorative Wall Shelves',
+      description: 'Set of 3 floating wall shelves for modern home decor.',
+      category: 'decor',
+      wholesalePrice: 40,
+      retailPrice: 75,
+      stock: 35,
+      imageUrl: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?w=500',
+      craftsmanId: '2',
+      craftsmanName: 'John Carpenter',
+      createdAt: new Date('2024-02-05'),
+      isActive: true,
+      dimensions: '60cm x 20cm x 5cm',
+      material: 'MDF Wood',
+      weight: '3kg'
+    }
+  ];
+
+  private mockCategories: Category[] = [
+    {
+      id: 'cat1',
+      name: 'Furniture',
+      description: 'Handcrafted wooden furniture for your home',
+      imageUrl: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=500',
+      productCount: 3
+    },
+    {
+      id: 'cat2',
+      name: 'Decor',
+      description: 'Beautiful wooden decorative items',
+      imageUrl: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500',
+      productCount: 2
+    },
+    {
+      id: 'cat3',
+      name: 'Kitchenware',
+      description: 'Eco-friendly wooden kitchen items',
+      imageUrl: 'https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=500',
+      productCount: 1
+    }
+  ];
+
+  constructor() { }
+
+  // Simulate API call with delay
+  getAllProducts(): Observable<Product[]> {
+    return of([...this.mockProducts]).pipe(delay(300));
+  }
+
+  getProductById(id: string): Observable<Product | undefined> {
+    const product = this.mockProducts.find(p => p.id === id);
+    return of(product).pipe(delay(300));
+  }
+
+  getProductsByCategory(category: string): Observable<Product[]> {
+    const products = this.mockProducts.filter(p => p.category === category);
+    return of(products).pipe(delay(300));
+  }
+
+  getAllCategories(): Observable<Category[]> {
+    return of([...this.mockCategories]).pipe(delay(300));
+  }
+
+  searchProducts(query: string): Observable<Product[]> {
+    const lowerQuery = query.toLowerCase();
+    const results = this.mockProducts.filter(p =>
+      p.name.toLowerCase().includes(lowerQuery) ||
+      p.description.toLowerCase().includes(lowerQuery) ||
+      p.category.toLowerCase().includes(lowerQuery)
+    );
+    return of(results).pipe(delay(300));
+  }
+
+  // Methods for Craftsman
+  addProduct(product: Product): Observable<Product> {
+    this.mockProducts.push(product);
+    return of(product).pipe(delay(300));
+  }
+
+  updateProduct(id: string, product: Partial<Product>): Observable<Product | undefined> {
+    const index = this.mockProducts.findIndex(p => p.id === id);
+    if (index !== -1) {
+      this.mockProducts[index] = { ...this.mockProducts[index], ...product };
+      return of(this.mockProducts[index]).pipe(delay(300));
+    }
+    return of(undefined).pipe(delay(300));
+  }
+
+  deleteProduct(id: string): Observable<boolean> {
+    const index = this.mockProducts.findIndex(p => p.id === id);
+    if (index !== -1) {
+      this.mockProducts.splice(index, 1);
+      return of(true).pipe(delay(300));
+    }
+    return of(false).pipe(delay(300));
+  }
+}
