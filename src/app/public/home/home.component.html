@@ -1,0 +1,69 @@
+<div class="home-container">
+  <!-- Hero Section -->
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>Welcome to WoodMart</h1>
+      <p>Discover Handcrafted Wooden Products</p>
+      <button class="btn-primary" (click)="viewAllProducts()">Shop Now</button>
+    </div>
+  </section>
+
+  <!-- Categories Section -->
+  <section class="categories-section">
+    <h2>Browse by Category</h2>
+    <div class="categories-grid">
+      <div *ngFor="let category of categories" class="category-card" (click)="viewCategory(category.name)">
+        <img [src]="category.imageUrl" [alt]="category.name">
+        <div class="category-info">
+          <h3>{{ category.name }}</h3>
+          <p>{{ category.productCount }} products</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Products Section -->
+  <section class="products-section">
+    <h2>Featured Products</h2>
+    <div *ngIf="loading" class="loading">Loading products...</div>
+    <div *ngIf="!loading" class="products-grid">
+      <div *ngFor="let product of featuredProducts" class="product-card">
+        <img [src]="product.imageUrl" [alt]="product.name" (click)="viewProduct(product.id)">
+        <div class="product-info">
+          <h3 (click)="viewProduct(product.id)">{{ product.name }}</h3>
+          <p class="product-description">{{ product.description }}</p>
+          <div class="product-price">${{ product.retailPrice }}</div>
+          <div class="product-stock" *ngIf="product.stock < 10">Only {{ product.stock }} left!</div>
+          <button class="btn-add-cart" (click)="addToCart(product)" [disabled]="product.stock === 0">
+            {{ product.stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="view-all">
+      <button class="btn-secondary" (click)="viewAllProducts()">View All Products</button>
+    </div>
+  </section>
+
+  <!-- Info Section -->
+  <section class="info-section">
+    <div class="info-grid">
+      <div class="info-card">
+        <h3>🎨 Handcrafted</h3>
+        <p>Every product is carefully crafted by skilled artisans</p>
+      </div>
+      <div class="info-card">
+        <h3>🌱 Sustainable</h3>
+        <p>We use eco-friendly and sustainable materials</p>
+      </div>
+      <div class="info-card">
+        <h3>🚚 Fast Shipping</h3>
+        <p>Quick and reliable delivery to your doorstep</p>
+      </div>
+      <div class="info-card">
+        <h3>✅ Quality Guaranteed</h3>
+        <p>100% satisfaction guaranteed on all products</p>
+      </div>
+    </div>
+  </section>
+</div>
