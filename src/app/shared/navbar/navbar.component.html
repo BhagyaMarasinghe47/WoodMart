@@ -1,0 +1,36 @@
+<nav class="navbar">
+  <div class="navbar-container">
+    <div class="navbar-brand" routerLink="/">
+      <span class="logo">🪵 WoodMart</span>
+    </div>
+
+    <div class="navbar-search">
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (keyup.enter)="onSearch()"
+        placeholder="Search products...">
+      <button (click)="onSearch()">Search</button>
+    </div>
+
+    <div class="navbar-menu">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+      <a routerLink="/products" routerLinkActive="active">Products</a>
+      <a routerLink="/cart" routerLinkActive="active" class="cart-link">
+        Cart
+        <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
+      </a>
+      
+      <div *ngIf="currentUser; else loginLink" class="user-menu">
+        <button class="user-button" (click)="navigateToDashboard()">
+          {{ currentUser.firstName }} ({{ currentUser.role }})
+        </button>
+        <button class="btn-logout" (click)="logout()">Logout</button>
+      </div>
+      
+      <ng-template #loginLink>
+        <a routerLink="/login" class="btn-login">Login</a>
+      </ng-template>
+    </div>
+  </div>
+</nav>
