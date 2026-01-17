@@ -1,0 +1,72 @@
+<div class="product-list-container">
+  <div class="header">
+    <h1>Browse Products</h1>
+    <p *ngIf="selectedCategory">Category: {{ selectedCategory }}</p>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <label for="search">Search:</label>
+      <input 
+        type="text" 
+        id="search" 
+        [(ngModel)]="searchQuery" 
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search products...">
+    </div>
+
+    <div class="filter-group">
+      <label for="category">Category:</label>
+      <select id="category" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange()">
+        <option value="">All Categories</option>
+        <option value="furniture">Furniture</option>
+        <option value="decor">Decor</option>
+        <option value="kitchenware">Kitchenware</option>
+      </select>
+    </div>
+
+    <button class="btn-clear" (click)="clearFilters()">Clear Filters</button>
+  </div>
+
+  <!-- Results -->
+  <div class="results-info">
+    <p>Showing {{ filteredProducts.length }} product(s)</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading">Loading products...</div>
+
+  <!-- No Results -->
+  <div *ngIf="!loading && filteredProducts.length === 0" class="no-results">
+    <h3>No products found</h3>
+    <p>Try adjusting your filters</p>
+  </div>
+
+  <!-- Products Grid -->
+  <div *ngIf="!loading && filteredProducts.length > 0" class="products-grid">
+    <div *ngFor="let product of filteredProducts" class="product-card">
+      <img [src]="product.imageUrl" [alt]="product.name" (click)="viewProduct(product.id)">
+      <div class="product-info">
+        <h3 (click)="viewProduct(product.id)">{{ product.name }}</h3>
+        <p class="product-description">{{ product.description }}</p>
+        <div class="product-details">
+          <span class="craftsman">By {{ product.craftsmanName }}</span>
+        </div>
+        <div class="product-price">${{ product.retailPrice }}</div>
+        <div class="product-stock" *ngIf="product.stock < 10 && product.stock > 0">
+          Only {{ product.stock }} left!
+        </div>
+        <div class="product-stock out-of-stock" *ngIf="product.stock === 0">
+          Out of Stock
+        </div>
+        <button 
+          class="btn-add-cart" 
+          (click)="addToCart(product)" 
+          [disabled]="product.stock === 0">
+          {{ product.stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
