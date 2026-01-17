@@ -1,0 +1,62 @@
+<div class="cart-container">
+  <h1>Shopping Cart</h1>
+
+  <div *ngIf="cart.items.length === 0" class="empty-cart">
+    <h2>Your cart is empty</h2>
+    <p>Add some products to get started!</p>
+    <button class="btn-primary" (click)="continueShopping()">Continue Shopping</button>
+  </div>
+
+  <div *ngIf="cart.items.length > 0" class="cart-content">
+    <div class="cart-items">
+      <div *ngFor="let item of cart.items" class="cart-item">
+        <img [src]="item.productImage" [alt]="item.productName">
+        <div class="item-details">
+          <h3>{{ item.productName }}</h3>
+          <p class="item-price">${{ item.price }}</p>
+        </div>
+        <div class="quantity-controls">
+          <button (click)="updateQuantity(item.productId, item.quantity - 1)">-</button>
+          <span class="quantity">{{ item.quantity }}</span>
+          <button (click)="updateQuantity(item.productId, item.quantity + 1)" 
+                  [disabled]="item.quantity >= item.maxStock">+</button>
+        </div>
+        <div class="item-subtotal">
+          ${{ (item.price * item.quantity).toFixed(2) }}
+        </div>
+        <button class="btn-remove" (click)="removeItem(item.productId)">
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <div class="cart-summary">
+      <h2>Order Summary</h2>
+      <div class="summary-row">
+        <span>Items:</span>
+        <span>{{ cart.totalItems }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Subtotal:</span>
+        <span>${{ cart.totalPrice.toFixed(2) }}</span>
+      </div>
+      <div class="summary-row">
+        <span>Shipping:</span>
+        <span>Calculated at checkout</span>
+      </div>
+      <div class="summary-row total">
+        <span>Total:</span>
+        <span>${{ cart.totalPrice.toFixed(2) }}</span>
+      </div>
+      <button class="btn-checkout" (click)="proceedToCheckout()">
+        Proceed to Checkout
+      </button>
+      <button class="btn-continue" (click)="continueShopping()">
+        Continue Shopping
+      </button>
+      <button class="btn-clear" (click)="clearCart()">
+        Clear Cart
+      </button>
+    </div>
+  </div>
+</div>
