@@ -1,0 +1,96 @@
+.auth-selection-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+}
+
+.auth-selection-card {
+  background: white;
+  border-radius: 20px;
+  padding: 60px 50px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+}
+
+.auth-title {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.auth-subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 40px;
+}
+
+.button-group {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 30px;
+  border: 2px solid #e0e0e0;
+  border-radius: 15px;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.auth-btn:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+.login-btn:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.register-btn:hover {
+  border-color: #764ba2;
+  background: #faf8ff;
+}
+
+.btn-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
+}
+
+.btn-text {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.btn-description {
+  font-size: 0.95rem;
+  color: #666;
+}
+
+@media (max-width: 600px) {
+  .auth-selection-card {
+    padding: 40px 30px;
+  }
+
+  .auth-title {
+    font-size: 2rem;
+  }
+
+  .btn-text {
+    font-size: 1.3rem;
+  }
+}

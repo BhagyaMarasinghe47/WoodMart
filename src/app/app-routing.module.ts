@@ -12,6 +12,8 @@ import { CartComponent } from './public/cart/cart.component';
 
 // Auth Components
 import { LoginComponent } from './auth/login/login.component';
+import { AuthSelectionComponent } from './auth/auth-selection/auth-selection.component';
+import { RegisterComponent } from './auth/register/register.component';
 
 // Role-based Components
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
@@ -25,7 +27,11 @@ const routes: Routes = [
   { path: 'products', component: ProductListComponent },
   { path: 'product/:id', component: ProductDetailComponent },
   { path: 'cart', component: CartComponent },
+  
+  // Auth Routes
+  { path: 'auth', component: AuthSelectionComponent },
   { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegisterComponent },
 
   // Admin Routes (ADMIN ONLY)
   {
