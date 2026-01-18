@@ -1,0 +1,197 @@
+<div class="register-container">
+  <div class="register-card">
+    <h1 class="register-title">Create Account</h1>
+    <p class="register-subtitle">Join WoodMart today</p>
+
+    <!-- Role Selection -->
+    <div class="role-selection">
+      <div 
+        class="role-card" 
+        [class.active]="selectedRole === 'CUSTOMER'"
+        (click)="selectRole('CUSTOMER')">
+        <input 
+          type="radio" 
+          name="role" 
+          value="CUSTOMER"
+          [checked]="selectedRole === 'CUSTOMER'"
+          id="user-role">
+        <label for="user-role">
+          <span class="role-icon">👤</span>
+          <span class="role-name">Register as User</span>
+        </label>
+      </div>
+
+      <div 
+        class="role-card" 
+        [class.active]="selectedRole === 'VENDOR'"
+        (click)="selectRole('VENDOR')">
+        <input 
+          type="radio" 
+          name="role" 
+          value="VENDOR"
+          [checked]="selectedRole === 'VENDOR'"
+          id="vendor-role">
+        <label for="vendor-role">
+          <span class="role-icon">🏪</span>
+          <span class="role-name">Register as Vendor</span>
+        </label>
+      </div>
+
+      <div 
+        class="role-card" 
+        [class.active]="selectedRole === 'CRAFTSMAN'"
+        (click)="selectRole('CRAFTSMAN')">
+        <input 
+          type="radio" 
+          name="role" 
+          value="CRAFTSMAN"
+          [checked]="selectedRole === 'CRAFTSMAN'"
+          id="craftsman-role">
+        <label for="craftsman-role">
+          <span class="role-icon">🔨</span>
+          <span class="role-name">Register as Craftsman</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Warning for Vendor/Craftsman -->
+    @if (selectedRole === 'VENDOR' || selectedRole === 'CRAFTSMAN') {
+      <div class="approval-warning">
+        <span class="warning-icon">⚠️</span>
+        {{ selectedRole === 'VENDOR' ? 'Vendor' : 'Craftsman' }} registrations are subject to admin approval before becoming visible to users.
+      </div>
+    }
+
+    <!-- Account Details -->
+    <div class="form-section">
+      <h3 class="section-title">Account Details</h3>
+
+      <div class="form-group">
+        <label for="fullName">Full Name *</label>
+        <input 
+          type="text" 
+          id="fullName"
+          [(ngModel)]="fullName"
+          placeholder="Enter your full name"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address *</label>
+        <input 
+          type="email" 
+          id="email"
+          [(ngModel)]="email"
+          placeholder="Enter your email"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="contactNumber">Contact Number *</label>
+        <input 
+          type="tel" 
+          id="contactNumber"
+          [(ngModel)]="contactNumber"
+          placeholder="Enter your contact number"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password *</label>
+        <input 
+          type="password" 
+          id="password"
+          [(ngModel)]="password"
+          placeholder="Create a password"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password *</label>
+        <input 
+          type="password" 
+          id="confirmPassword"
+          [(ngModel)]="confirmPassword"
+          placeholder="Confirm your password"
+          class="form-input">
+      </div>
+
+      <div class="form-group">
+        <label for="cityArea">City / Area (Optional)</label>
+        <input 
+          type="text" 
+          id="cityArea"
+          [(ngModel)]="cityArea"
+          placeholder="Enter your city or area"
+          class="form-input">
+      </div>
+    </div>
+
+    <!-- Pharmacy Details (Only for Vendor) -->
+    @if (selectedRole === 'VENDOR') {
+      <div class="form-section">
+        <h3 class="section-title">Pharmacy Details</h3>
+
+        <div class="form-group">
+          <label for="pharmacyName">Pharmacy Name *</label>
+          <input 
+            type="text" 
+            id="pharmacyName"
+            [(ngModel)]="pharmacyName"
+            placeholder="Enter pharmacy name"
+            class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label for="pharmacyRegistrationNumber">Pharmacy Registration Number *</label>
+          <input 
+            type="text" 
+            id="pharmacyRegistrationNumber"
+            [(ngModel)]="pharmacyRegistrationNumber"
+            placeholder="Enter registration number"
+            class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label for="pharmacyAddress">Pharmacy Address *</label>
+          <textarea 
+            id="pharmacyAddress"
+            [(ngModel)]="pharmacyAddress"
+            placeholder="Enter complete address"
+            class="form-input form-textarea"
+            rows="3"></textarea>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              [(ngModel)]="deliveryAvailable"
+              class="checkbox-input">
+            <span>Delivery Available</span>
+          </label>
+        </div>
+      </div>
+    }
+
+    <!-- Error/Success Messages -->
+    @if (errorMessage) {
+      <div class="alert alert-error">{{ errorMessage }}</div>
+    }
+
+    @if (successMessage) {
+      <div class="alert alert-success">{{ successMessage }}</div>
+    }
+
+    <!-- Register Button -->
+    <button class="register-btn" (click)="onRegister()">
+      Register
+    </button>
+
+    <!-- Login Link -->
+    <div class="login-link">
+      Already have an account? 
+      <a (click)="navigateToLogin()">Login here</a>
+    </div>
+  </div>
+</div>
