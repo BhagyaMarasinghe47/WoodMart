@@ -1,0 +1,67 @@
+<div class="category-page">
+  <div class="category-container">
+    <!-- Left Sidebar: Sub-categories -->
+    <aside class="category-sidebar">
+      <h3 class="sidebar-title">Categories</h3>
+      
+      <div *ngIf="category" class="sidebar-content">
+        <div class="main-category">
+          <h4>{{ category.name }}</h4>
+        </div>
+
+        <ul class="subcategory-list">
+          <li 
+            class="subcategory-item"
+            [class.active]="!selectedSubCategory">
+            <a (click)="clearFilter()">All Products</a>
+          </li>
+          <li 
+            *ngFor="let subCat of category.subCategories"
+            class="subcategory-item"
+            [class.active]="selectedSubCategory === subCat.slug">
+            <a (click)="filterBySubCategory(subCat.slug)">
+              {{ subCat.name }}
+            </a>
+          </li>
+        </ul>
+      </div>
+    </aside>
+
+    <!-- Right Side: Product Grid -->
+    <main class="category-content">
+      <div class="content-header">
+        <h2 *ngIf="category">
+          {{ selectedSubCategory ? getSubCategoryName(selectedSubCategory) : category.name }}
+        </h2>
+        <p class="product-count">{{ products.length }} products found</p>
+      </div>
+
+      <!-- Product Grid -->
+      <div class="products-grid">
+        <div *ngFor="let product of products" class="product-card">
+          <div class="product-image" (click)="viewProductDetail(product.id)">
+            <img [src]="product.image" [alt]="product.name">
+          </div>
+          
+          <div class="product-info">
+            <h3 class="product-name" (click)="viewProductDetail(product.id)">
+              {{ product.name }}
+            </h3>
+            <p class="product-vendor">by {{ product.vendorName }}</p>
+            <div class="product-footer">
+              <span class="product-price">Rs. {{ product.price.toLocaleString() }}</span>
+              <button class="btn-add-cart" (click)="addToCart(product)">
+                Add to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- No Products Message -->
+      <div *ngIf="products.length === 0" class="no-products">
+        <p>No products found in this category.</p>
+      </div>
+    </main>
+  </div>
+</div>

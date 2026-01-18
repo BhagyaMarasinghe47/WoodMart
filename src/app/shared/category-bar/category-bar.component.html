@@ -1,0 +1,28 @@
+<div class="category-bar">
+  <div class="category-container">
+    <div 
+      *ngFor="let category of categories" 
+      class="category-item"
+      (mouseenter)="showDropdown(category.id)"
+      (mouseleave)="hideDropdown()">
+      
+      <a 
+        class="category-link" 
+        (click)="navigateToCategory(category.slug)">
+        {{ category.name }}
+      </a>
+
+      <!-- Dropdown Sub-categories -->
+      <div 
+        *ngIf="activeDropdown === category.id" 
+        class="dropdown-menu">
+        <a 
+          *ngFor="let subCat of category.subCategories" 
+          class="dropdown-item"
+          (click)="navigateToSubCategory(category.slug, subCat.slug)">
+          {{ subCat.name }}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>

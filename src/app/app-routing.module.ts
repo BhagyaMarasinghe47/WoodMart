@@ -10,6 +10,7 @@ import { ProductListComponent } from './public/product-list/product-list.compone
 import { ProductDetailComponent } from './public/product-detail/product-detail.component';
 import { CartComponent } from './public/cart/cart.component';
 import { ShopsComponent } from './public/shops/shops.component';
+import { CategoryComponent } from './public/category/category.component';
 
 // Auth Components
 import { LoginComponent } from './auth/login/login.component';
@@ -28,6 +29,7 @@ const routes: Routes = [
   { path: 'products', component: ProductListComponent },
   { path: 'product/:id', component: ProductDetailComponent },
   { path: 'shops', component: ShopsComponent },
+  { path: 'category/:categoryName', component: CategoryComponent },
   { path: 'cart', component: CartComponent },
   
   // Auth Routes
