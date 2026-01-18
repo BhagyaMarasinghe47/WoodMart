@@ -1,0 +1,80 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="login-header">
+      <h1>Welcome to WoodMart</h1>
+      <p>Sign in to continue</p>
+    </div>
+
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <!-- Role Selector -->
+      <div class="form-group">
+        <label for="role">Select Role</label>
+        <select 
+          id="role" 
+          [(ngModel)]="selectedRole" 
+          name="role"
+          class="role-select">
+          <option value="CUSTOMER">User</option>
+          <option value="VENDOR">Vendor</option>
+          <option value="CRAFTSMAN">Craftsman</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input 
+          type="email" 
+          id="email" 
+          [(ngModel)]="email" 
+          name="email"
+          placeholder="Enter your email"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input 
+          type="password" 
+          id="password" 
+          [(ngModel)]="password" 
+          name="password"
+          placeholder="Enter your password"
+          required>
+      </div>
+
+      <div *ngIf="error" class="error-message">
+        {{ error }}
+      </div>
+
+      <button 
+        type="submit" 
+        class="btn-login" 
+        [disabled]="loading">
+        {{ loading ? 'Signing in...' : 'Sign In' }}
+      </button>
+    </form>
+
+    <div class="register-link">
+      Don't have an account? 
+      <a (click)="navigateToRegister()">Register here</a>
+    </div>
+
+    <div class="demo-accounts">
+      <h3>Demo Accounts:</h3>
+      <div class="demo-list">
+        <div class="demo-account">
+          <strong>Admin:</strong> admin&#64;woodmart.com / admin123
+        </div>
+        <div class="demo-account">
+          <strong>Craftsman:</strong> craftsman&#64;woodmart.com / craft123
+        </div>
+        <div class="demo-account">
+          <strong>Vendor:</strong> vendor&#64;woodmart.com / vendor123
+        </div>
+        <div class="demo-account">
+          <strong>Customer:</strong> customer&#64;woodmart.com / customer123
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
