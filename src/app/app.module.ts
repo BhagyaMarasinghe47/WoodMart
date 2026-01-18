@@ -15,6 +15,7 @@ import { HomeComponent } from './public/home/home.component';
 import { ProductListComponent } from './public/product-list/product-list.component';
 import { ProductDetailComponent } from './public/product-detail/product-detail.component';
 import { CartComponent } from './public/cart/cart.component';
+import { ShopsComponent } from './public/shops/shops.component';
 
 // Auth Components
 import { LoginComponent } from './auth/login/login.component';
@@ -38,6 +39,7 @@ import { CustomerDashboardComponent } from './customer/customer-dashboard/custom
     ProductListComponent,
     ProductDetailComponent,
     CartComponent,
+    ShopsComponent,
     // Auth
     LoginComponent,
     AuthSelectionComponent,

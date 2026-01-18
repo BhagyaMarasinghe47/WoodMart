@@ -132,4 +132,83 @@ export class AuthService {
         return '/';
     }
   }
+
+  // Register new user (mock registration - frontend only)
+  register(userData: {
+    fullName: string;
+    email: string;
+    contactNumber: string;
+    password: string;
+    cityArea?: string;
+    role: 'CUSTOMER' | 'VENDOR' | 'CRAFTSMAN';
+    // Vendor-specific fields
+    pharmacyName?: string;
+    pharmacyRegistrationNumber?: string;
+    pharmacyAddress?: string;
+    deliveryAvailable?: boolean;
+  }): { success: boolean; message: string } {
+    // Check if email already exists
+    const existingUser = this.mockUsers.find(u => u.email === userData.email);
+    if (existingUser) {
+      return {
+        success: false,
+        message: 'Email already registered. Please use a different email.'
+      };
+    }
+
+    // Parse full name
+    const nameParts = userData.fullName.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || firstName;
+
+    // Create new user
+    const newUser: User = {
+      id: String(this.mockUsers.length + 1),
+      email: userData.email,
+      password: userData.password,
+      firstName: firstName,
+      lastName: lastName,
+      role: UserRole[userData.role],
+      // CUSTOMER can login immediately, VENDOR/CRAFTSMAN need admin approval
+      approvalStatus: userData.role === 'CUSTOMER' 
+        ? ApprovalStatus.APPROVED 
+        : ApprovalStatus.PENDING,
+      createdAt: new Date(),
+      phone: userData.contactNumber,
+      address: userData.cityArea || ''
+    };
+
+    // Add to mock database (Note: Vendor-specific fields like pharmacyName, 
+    // pharmacyRegistrationNumber, pharmacyAddress, and deliveryAvailable 
+    // would be stored in the backend database in a real application)
+    this.mockUsers.push(newUser);
+
+    // Log vendor details for mock purposes
+    if (userData.role === 'VENDOR' && userData.pharmacyName) {
+      console.log('Vendor Registration Details:', {
+        pharmacyName: userData.pharmacyName,
+        registrationNumber: userData.pharmacyRegistrationNumber,
+        address: userData.pharmacyAddress,
+        deliveryAvailable: userData.deliveryAvailable
+      });
+    }
+
+    // Return appropriate message
+    if (userData.role === 'CUSTOMER') {
+      return {
+        success: true,
+        message: 'Registration successful! You can now login.'
+      };
+    } else {
+      return {
+        success: true,
+        message: `Registration submitted for admin approval. You will be able to login once approved.`
+      };
+    }
+  }
+
+  // Get all pending users (for admin dashboard)
+  getPendingUsers(): User[] {
+    return this.mockUsers.filter(u => u.approvalStatus === ApprovalStatus.PENDING);
+  }
 }

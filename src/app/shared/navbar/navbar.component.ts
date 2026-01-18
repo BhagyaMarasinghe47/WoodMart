@@ -12,7 +12,7 @@ import { User } from '../../core/models/user.model';
 export class NavbarComponent implements OnInit {
   currentUser: User | null = null;
   cartItemCount = 0;
-  searchQuery = '';
+  showAuthOptions = false;
 
   constructor(
     public authService: AuthService,
@@ -30,14 +30,6 @@ export class NavbarComponent implements OnInit {
     });
   }
 
-  onSearch(): void {
-    if (this.searchQuery.trim()) {
-      this.router.navigate(['/products'], { 
-        queryParams: { search: this.searchQuery } 
-      });
-    }
-  }
-
   logout(): void {
     this.authService.logout();
   }
@@ -47,5 +39,19 @@ export class NavbarComponent implements OnInit {
       const dashboardRoute = this.authService.getDashboardRoute(this.currentUser.role);
       this.router.navigate([dashboardRoute]);
     }
+  }
+
+  toggleAuthOptions(): void {
+    this.showAuthOptions = !this.showAuthOptions;
+  }
+
+  navigateToLogin(): void {
+    this.showAuthOptions = false;
+    this.router.navigate(['/login']);
+  }
+
+  navigateToRegister(): void {
+    this.showAuthOptions = false;
+    this.router.navigate(['/register']);
   }
 }

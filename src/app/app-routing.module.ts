@@ -9,6 +9,7 @@ import { HomeComponent } from './public/home/home.component';
 import { ProductListComponent } from './public/product-list/product-list.component';
 import { ProductDetailComponent } from './public/product-detail/product-detail.component';
 import { CartComponent } from './public/cart/cart.component';
+import { ShopsComponent } from './public/shops/shops.component';
 
 // Auth Components
 import { LoginComponent } from './auth/login/login.component';
@@ -26,6 +27,7 @@ const routes: Routes = [
   { path: '', component: HomeComponent },
   { path: 'products', component: ProductListComponent },
   { path: 'product/:id', component: ProductDetailComponent },
+  { path: 'shops', component: ShopsComponent },
   { path: 'cart', component: CartComponent },
   
   // Auth Routes

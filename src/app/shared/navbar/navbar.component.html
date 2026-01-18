@@ -1,21 +1,14 @@
 <nav class="navbar">
   <div class="navbar-container">
     <div class="navbar-brand" routerLink="/">
-      <span class="logo">🪵 WoodMart</span>
-    </div>
-
-    <div class="navbar-search">
-      <input 
-        type="text" 
-        [(ngModel)]="searchQuery" 
-        (keyup.enter)="onSearch()"
-        placeholder="Search products...">
-      <button (click)="onSearch()">Search</button>
+      <img src="assets/images/logo.png" alt="WoodMart Logo" class="logo-img">
+      <span class="logo">WoodMart</span>
     </div>
 
     <div class="navbar-menu">
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
       <a routerLink="/products" routerLinkActive="active">Products</a>
+      <a routerLink="/shops" routerLinkActive="active">Shops</a>
       <a routerLink="/cart" routerLinkActive="active" class="cart-link">
         Cart
         <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
@@ -29,7 +22,15 @@
       </div>
       
       <ng-template #loginLink>
-        <a routerLink="/login" class="btn-login">Login</a>
+        <div class="auth-buttons">
+          <button *ngIf="!showAuthOptions" (click)="toggleAuthOptions()" class="btn-login">
+            Login
+          </button>
+          <div *ngIf="showAuthOptions" class="auth-options">
+            <button (click)="navigateToLogin()" class="btn-login">Login</button>
+            <button (click)="navigateToRegister()" class="btn-register">Register</button>
+          </div>
+        </div>
       </ng-template>
     </div>
   </div>
