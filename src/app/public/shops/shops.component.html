@@ -1,0 +1,52 @@
+<div class="shops-container">
+  <div class="shops-header">
+    <h1>Vendor Shops</h1>
+    <p>Explore our trusted vendors and their quality products</p>
+  </div>
+
+  <div class="search-section">
+    <div class="search-bar">
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="onSearch()"
+        placeholder="Search shops by name or description...">
+      <button (click)="onSearch()">Search</button>
+    </div>
+  </div>
+
+  <div class="shops-grid">
+    <div *ngFor="let shop of filteredShops" class="shop-card">
+      <div class="shop-image">
+        <img [src]="shop.image" [alt]="shop.name">
+        <div *ngIf="shop.deliveryAvailable" class="delivery-badge">
+          🚚 Delivery Available
+        </div>
+      </div>
+      
+      <div class="shop-content">
+        <h3 class="shop-name">{{ shop.name }}</h3>
+        <p class="shop-owner">by {{ shop.ownerName }}</p>
+        <p class="shop-description">{{ shop.description }}</p>
+        
+        <div class="shop-rating">
+          <span class="stars">
+            <ng-container *ngFor="let star of [1,2,3,4,5]">
+              <span *ngIf="star <= shop.rating" class="star filled">★</span>
+              <span *ngIf="star > shop.rating" class="star">★</span>
+            </ng-container>
+          </span>
+          <span class="rating-value">{{ shop.rating }}</span>
+        </div>
+        
+        <button class="btn-view-shop" (click)="viewShop(shop.id)">
+          View Products
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="filteredShops.length === 0" class="no-results">
+    <p>No shops found matching your search.</p>
+  </div>
+</div>
