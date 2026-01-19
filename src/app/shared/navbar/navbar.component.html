@@ -1,37 +1,131 @@
 <nav class="navbar">
   <div class="navbar-container">
+    <!-- Logo - Always visible -->
     <div class="navbar-brand" routerLink="/">
       <img src="assets/images/logo.png" alt="WoodMart Logo" class="logo-img">
       <span class="logo">WoodMart</span>
     </div>
 
+    <!-- Main Navigation Menu -->
     <div class="navbar-menu">
+      <!-- PUBLIC LINKS - Always visible to everyone -->
       <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
       <a routerLink="/products" routerLinkActive="active">Products</a>
       <a routerLink="/shops" routerLinkActive="active">Shops</a>
-      <a routerLink="/cart" routerLinkActive="active" class="cart-link">
-        Cart
-        <span *ngIf="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
-      </a>
-      
-      <div *ngIf="currentUser; else loginLink" class="user-menu">
-        <button class="user-button" (click)="navigateToDashboard()">
-          {{ currentUser.firstName }} ({{ currentUser.role }})
-        </button>
-        <button class="btn-logout" (click)="logout()">Logout</button>
-      </div>
-      
-      <ng-template #loginLink>
-        <div class="auth-buttons">
-          <button *ngIf="!showAuthOptions" (click)="toggleAuthOptions()" class="btn-login">
-            Login
+
+      <!-- GUEST USER - Not logged in -->
+      @if (isGuest()) {
+        <!-- Cart for guests -->
+        <a routerLink="/cart" routerLinkActive="active" class="cart-link">
+          Cart
+          @if (cartItemCount > 0) {
+            <span class="cart-badge">{{ cartItemCount }}</span>
+          }
+        </a>
+        
+        <!-- Login button -->
+        <button class="btn-login" (click)="navigateToLogin()">Login</button>
+      }
+
+      <!-- CUSTOMER - Logged in as customer -->
+      @if (isCustomer()) {
+        <!-- Cart for customers -->
+        <a routerLink="/cart" routerLinkActive="active" class="cart-link">
+          Cart
+          @if (cartItemCount > 0) {
+            <span class="cart-badge">{{ cartItemCount }}</span>
+          }
+        </a>
+        
+        <!-- My Orders link -->
+        <a routerLink="/customer/orders" routerLinkActive="active">My Orders</a>
+        
+        <!-- Profile dropdown -->
+        <div class="profile-menu">
+          <button class="profile-button" (click)="toggleProfileDropdown()">
+            <span class="profile-icon">👤</span>
+            {{ currentUser?.firstName }}
+            <span class="dropdown-arrow">▼</span>
           </button>
-          <div *ngIf="showAuthOptions" class="auth-options">
-            <button (click)="navigateToLogin()" class="btn-login">Login</button>
-            <button (click)="navigateToRegister()" class="btn-register">Register</button>
-          </div>
+          @if (showProfileDropdown) {
+            <div class="profile-dropdown">
+              <button (click)="navigateToDashboard()">Dashboard</button>
+              <button (click)="logout()">Logout</button>
+            </div>
+          }
         </div>
-      </ng-template>
+      }
+
+      <!-- VENDOR - Logged in as vendor -->
+      @if (isVendor()) {
+        <!-- Vendor Dashboard link -->
+        <a routerLink="/vendor/dashboard" routerLinkActive="active" class="dashboard-link">
+          Vendor Dashboard
+        </a>
+        
+        <!-- Profile dropdown -->
+        <div class="profile-menu">
+          <button class="profile-button" (click)="toggleProfileDropdown()">
+            <span class="profile-icon">🏪</span>
+            {{ currentUser?.firstName }}
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          @if (showProfileDropdown) {
+            <div class="profile-dropdown">
+              <button (click)="logout()">Logout</button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- CRAFTSMAN - Logged in as craftsman -->
+      @if (isCraftsman()) {
+        <!-- Craftsman Dashboard link -->
+        <a routerLink="/craftsman/dashboard" routerLinkActive="active" class="dashboard-link">
+          Craftsman Dashboard
+        </a>
+        
+        <!-- Profile dropdown -->
+        <div class="profile-menu">
+          <button class="profile-button" (click)="toggleProfileDropdown()">
+            <span class="profile-icon">🔨</span>
+            {{ currentUser?.firstName }}
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          @if (showProfileDropdown) {
+            <div class="profile-dropdown">
+              <button (click)="logout()">Logout</button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ADMIN - Logged in as admin -->
+      @if (isAdmin()) {
+        <!-- Admin Dashboard link -->
+        <a routerLink="/admin/dashboard" routerLinkActive="active" class="dashboard-link">
+          Admin Dashboard
+        </a>
+        
+        <!-- User Management link -->
+        <a routerLink="/admin/users" routerLinkActive="active" class="dashboard-link">
+          User Management
+        </a>
+        
+        <!-- Profile dropdown -->
+        <div class="profile-menu">
+          <button class="profile-button" (click)="toggleProfileDropdown()">
+            <span class="profile-icon">⚙️</span>
+            Admin
+            <span class="dropdown-arrow">▼</span>
+          </button>
+          @if (showProfileDropdown) {
+            <div class="profile-dropdown">
+              <button (click)="logout()">Logout</button>
+            </div>
+          }
+        </div>
+      }
     </div>
   </div>
 </nav>

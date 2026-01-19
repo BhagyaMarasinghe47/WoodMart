@@ -1,0 +1,253 @@
+<div class="vendor-dashboard">
+  <div class="dashboard-header">
+    <h1>Vendor Dashboard</h1>
+    <button class="btn-logout" (click)="logout()">Logout</button>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="dashboard-tabs">
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'overview'"
+      (click)="switchTab('overview')">
+      <span class="tab-icon">📊</span> Overview
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'orders'"
+      (click)="switchTab('orders')">
+      <span class="tab-icon">📦</span> Customer Orders
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'inventory'"
+      (click)="switchTab('inventory')">
+      <span class="tab-icon">📋</span> Inventory
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="activeTab === 'craftsmen'"
+      (click)="switchTab('craftsmen')">
+      <span class="tab-icon">👨‍🔧</span> Craftsmen
+    </button>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div class="dashboard-content">
+    
+    <!-- OVERVIEW TAB -->
+    <div *ngIf="activeTab === 'overview'" class="tab-content">
+      <h2 class="section-title">Dashboard Overview</h2>
+      
+      <!-- Summary Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📦</div>
+          <div class="stat-info">
+            <h3>Total Orders</h3>
+            <p class="stat-value">{{ stats.totalOrders }}</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">📋</div>
+          <div class="stat-info">
+            <h3>Inventory Items</h3>
+            <p class="stat-value">{{ stats.totalInventoryItems }}</p>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon">👨‍🔧</div>
+          <div class="stat-info">
+            <h3>Craftsmen</h3>
+            <p class="stat-value">{{ stats.totalCraftsmen }}</p>
+          </div>
+        </div>
+        
+        <div class="stat-card highlight">
+          <div class="stat-icon">💰</div>
+          <div class="stat-info">
+            <h3>Monthly Sales</h3>
+            <p class="stat-value">Rs. {{ stats.monthlySales.toLocaleString() }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h3>Quick Actions</h3>
+        <div class="action-buttons">
+          <button class="action-btn" (click)="switchTab('orders')">
+            View Orders
+          </button>
+          <button class="action-btn" (click)="switchTab('inventory')">
+            Manage Inventory
+          </button>
+          <button class="action-btn" (click)="switchTab('craftsmen')">
+            Browse Craftsmen
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS TAB -->
+    <div *ngIf="activeTab === 'orders'" class="tab-content">
+      <h2 class="section-title">Customer Orders</h2>
+      
+      <div class="orders-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Products</th>
+              <th>Total Amount</th>
+              <th>Order Date</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let order of orders">
+              <td class="order-number">{{ order.orderNumber }}</td>
+              <td>
+                <div class="customer-info">
+                  <strong>{{ order.customerName }}</strong>
+                  <small>{{ order.customerEmail }}</small>
+                </div>
+              </td>
+              <td>
+                <div class="products-list">
+                  <div *ngFor="let product of order.products" class="product-item">
+                    {{ product.productName }} (x{{ product.quantity }})
+                  </div>
+                </div>
+              </td>
+              <td class="amount">Rs. {{ order.totalAmount.toLocaleString() }}</td>
+              <td>{{ order.orderDate | date: 'MMM d, y' }}</td>
+              <td>
+                <span class="status-badge" [class]="getStatusClass(order.status)">
+                  {{ order.status }}
+                </span>
+              </td>
+              <td>
+                <select 
+                  class="status-select" 
+                  [value]="order.status"
+                  (change)="updateOrderStatus(order.id, $any($event.target).value)">
+                  <option *ngFor="let status of orderStatuses" [value]="status">
+                    {{ status }}
+                  </option>
+                </select>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- INVENTORY TAB -->
+    <div *ngIf="activeTab === 'inventory'" class="tab-content">
+      <h2 class="section-title">Inventory Stock Management</h2>
+      
+      <div class="inventory-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th>Craftsman</th>
+              <th>Stock Quantity</th>
+              <th>Retail Price</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of inventoryItems">
+              <td>
+                <img [src]="item.imageUrl" [alt]="item.productName" class="product-thumbnail">
+              </td>
+              <td><strong>{{ item.productName }}</strong></td>
+              <td>{{ item.category }}</td>
+              <td>{{ item.craftsmanName }}</td>
+              <td>
+                <div *ngIf="editingStock !== item.id" class="stock-display">
+                  <span [class.low-stock]="item.stockQuantity < 5">
+                    {{ item.stockQuantity }} units
+                  </span>
+                  <button class="btn-edit-small" (click)="startEditStock(item.id, item.stockQuantity)">
+                    ✏️
+                  </button>
+                </div>
+                <div *ngIf="editingStock === item.id" class="edit-field">
+                  <input 
+                    type="number" 
+                    [(ngModel)]="tempStockValue" 
+                    min="0"
+                    class="input-small">
+                  <button class="btn-save-small" (click)="saveStock(item.id)">✓</button>
+                  <button class="btn-cancel-small" (click)="cancelEditStock()">✗</button>
+                </div>
+              </td>
+              <td>
+                <div *ngIf="editingPrice !== item.id" class="price-display">
+                  Rs. {{ item.retailPrice.toLocaleString() }}
+                  <button class="btn-edit-small" (click)="startEditPrice(item.id, item.retailPrice)">
+                    ✏️
+                  </button>
+                </div>
+                <div *ngIf="editingPrice === item.id" class="edit-field">
+                  <input 
+                    type="number" 
+                    [(ngModel)]="tempPriceValue" 
+                    min="0"
+                    class="input-small">
+                  <button class="btn-save-small" (click)="savePrice(item.id)">✓</button>
+                  <button class="btn-cancel-small" (click)="cancelEditPrice()">✗</button>
+                </div>
+              </td>
+              <td>
+                <button class="btn-action">View Details</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- CRAFTSMEN TAB -->
+    <div *ngIf="activeTab === 'craftsmen'" class="tab-content">
+      <h2 class="section-title">Registered Craftsmen</h2>
+      
+      <div class="craftsmen-grid">
+        <div *ngFor="let craftsman of craftsmen" class="craftsman-card">
+          <div class="craftsman-header">
+            <div class="craftsman-avatar">{{ craftsman.name.charAt(0) }}</div>
+            <div class="craftsman-info">
+              <h3>{{ craftsman.name }}</h3>
+              <p class="location">📍 {{ craftsman.location }}</p>
+            </div>
+          </div>
+          
+          <div class="craftsman-details">
+            <p><strong>Email:</strong> {{ craftsman.email }}</p>
+            <p><strong>Phone:</strong> {{ craftsman.phone }}</p>
+            <p><strong>Specialization:</strong> {{ craftsman.specialization }}</p>
+            <div class="rating">
+              <span class="stars">⭐ {{ craftsman.rating }}</span>
+              <span class="products-count">{{ craftsman.productsCount }} products</span>
+            </div>
+          </div>
+          
+          <div class="craftsman-actions">
+            <button class="btn-view-profile">View Profile</button>
+            <button class="btn-view-products">Browse Products</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
