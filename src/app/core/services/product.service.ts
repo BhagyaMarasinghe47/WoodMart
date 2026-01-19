@@ -14,9 +14,9 @@ export class ProductService {
   private mockProducts: Product[] = [
     {
       id: 'p1',
-      name: 'Handcrafted Oak Dining Table',
+      name: 'Dining Table Set',
       description: 'Beautiful solid oak dining table with smooth finish. Seats 6-8 people comfortably.',
-      category: 'furniture',
+      category: 'dining-room-furniture',
       wholesalePrice: 450,
       retailPrice: 699,
       stock: 15,
@@ -31,9 +31,9 @@ export class ProductService {
     },
     {
       id: 'p2',
-      name: 'Wooden Picture Frame Set',
-      description: 'Set of 3 elegant wooden picture frames with vintage design.',
-      category: 'decor',
+      name: 'Coffee Table',
+      description: 'Elegant coffee table with storage compartment. Perfect for your living room.',
+      category: 'living-room-furniture',
       wholesalePrice: 25,
       retailPrice: 45,
       stock: 50,
@@ -48,9 +48,9 @@ export class ProductService {
     },
     {
       id: 'p3',
-      name: 'Custom Wooden Bookshelf',
+      name: 'Bookshelf',
       description: '5-tier bookshelf made from reclaimed wood. Eco-friendly and stylish.',
-      category: 'furniture',
+      category: 'living-room-furniture',
       wholesalePrice: 180,
       retailPrice: 299,
       stock: 8,
@@ -65,9 +65,9 @@ export class ProductService {
     },
     {
       id: 'p4',
-      name: 'Wooden Kitchen Utensil Set',
-      description: 'Complete set of 7 handcrafted wooden kitchen utensils.',
-      category: 'kitchenware',
+      name: 'Wooden Bed (King Size)',
+      description: 'Elegant king size wooden bed with solid construction and beautiful finish.',
+      category: 'bedroom-furniture',
       wholesalePrice: 30,
       retailPrice: 55,
       stock: 100,
@@ -82,9 +82,9 @@ export class ProductService {
     },
     {
       id: 'p5',
-      name: 'Rustic Coffee Table',
-      description: 'Rustic style coffee table with storage compartment.',
-      category: 'furniture',
+      name: 'TV Stand / Console',
+      description: 'Modern TV stand with multiple storage compartments for entertainment systems.',
+      category: 'living-room-furniture',
       wholesalePrice: 120,
       retailPrice: 199,
       stock: 20,
@@ -99,9 +99,9 @@ export class ProductService {
     },
     {
       id: 'p6',
-      name: 'Decorative Wall Shelves',
-      description: 'Set of 3 floating wall shelves for modern home decor.',
-      category: 'decor',
+      name: 'Dining Chairs (Set of 4)',
+      description: 'Set of 4 elegant dining chairs with comfortable seating and solid wood construction.',
+      category: 'dining-room-furniture',
       wholesalePrice: 40,
       retailPrice: 75,
       stock: 35,
@@ -119,23 +119,23 @@ export class ProductService {
   private mockCategories: Category[] = [
     {
       id: 'cat1',
-      name: 'Furniture',
-      description: 'Handcrafted wooden furniture for your home',
-      imageUrl: 'https://images.unsplash.com/photo-1538688525198-9b88f6f53126?w=500',
+      name: 'Living Room Furniture',
+      description: 'Handcrafted wooden furniture for your living room',
+      imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500',
       productCount: 3
     },
     {
       id: 'cat2',
-      name: 'Decor',
-      description: 'Beautiful wooden decorative items',
-      imageUrl: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=500',
+      name: 'Bedroom Furniture',
+      description: 'Beautiful wooden furniture for your bedroom',
+      imageUrl: 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=500',
       productCount: 2
     },
     {
       id: 'cat3',
-      name: 'Kitchenware',
-      description: 'Eco-friendly wooden kitchen items',
-      imageUrl: 'https://images.unsplash.com/photo-1556909212-d5b604d0c90d?w=500',
+      name: 'Dining Room Furniture',
+      description: 'Elegant wooden dining furniture',
+      imageUrl: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=500',
       productCount: 1
     }
   ];

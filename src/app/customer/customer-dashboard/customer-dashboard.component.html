@@ -30,7 +30,21 @@
         <div class="order-details">
           <p><strong>Date:</strong> {{ order.createdAt | date }}</p>
           <p><strong>Total:</strong> ${{ order.totalAmount.toFixed(2) }}</p>
-          <p><strong>Items:</strong> {{ order.items.length }}</p>
+        </div>
+        
+        <!-- Order Items with Images -->
+        <div class="order-items">
+          <h4>Items ({{ order.items.length }}):</h4>
+          <div class="items-grid">
+            <div *ngFor="let item of order.items" class="order-item">
+              <img [src]="item.productImage" [alt]="item.productName" class="item-image">
+              <div class="item-details">
+                <p class="item-name">{{ item.productName }}</p>
+                <p class="item-info">Qty: {{ item.quantity }} × ${{ item.price.toFixed(2) }}</p>
+                <p class="item-subtotal">${{ item.subtotal.toFixed(2) }}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

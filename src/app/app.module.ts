@@ -56,8 +56,8 @@ import { CustomerDashboardComponent } from './customer/customer-dashboard/custom
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule,
-    FormsModule
+    FormsModule,
+    AppRoutingModule
   ],
   providers: [],
   bootstrap: [AppComponent]

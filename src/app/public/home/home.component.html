@@ -22,23 +22,33 @@
     </div>
   </section>
 
-  <!-- Featured Products Section -->
+  <!-- Best Selling Products Section -->
   <section class="products-section">
-    <h2>Featured Products</h2>
+    <h2>Best Selling Products</h2>
     <div *ngIf="loading" class="loading">Loading products...</div>
-    <div *ngIf="!loading" class="products-grid">
-      <div *ngFor="let product of featuredProducts" class="product-card">
-        <img [src]="product.imageUrl" [alt]="product.name" (click)="viewProduct(product.id)">
-        <div class="product-info">
-          <h3 (click)="viewProduct(product.id)">{{ product.name }}</h3>
-          <p class="product-description">{{ product.description }}</p>
-          <div class="product-price">${{ product.retailPrice }}</div>
-          <div class="product-stock" *ngIf="product.stock < 10">Only {{ product.stock }} left!</div>
-          <button class="btn-add-cart" (click)="addToCart(product)" [disabled]="product.stock === 0">
-            {{ product.stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
-          </button>
+    <div *ngIf="!loading" class="products-carousel">
+      <button class="carousel-arrow left-arrow" (click)="scrollLeft()" [disabled]="isAtStart">❮</button>
+      <div class="products-scroll-container" #scrollContainer>
+        <div class="products-grid-horizontal">
+          <div *ngFor="let product of featuredProducts" class="product-card">
+            <div class="product-image-container">
+              <img [src]="product.imageUrl" [alt]="product.name" (click)="viewProduct(product.id)">
+              <button class="heart-button" (click)="addToCart(product)" [disabled]="product.stock === 0" title="Add to Cart">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+              </button>
+            </div>
+            <div class="product-info">
+              <h3 (click)="viewProduct(product.id)">{{ product.name }}</h3>
+              <p class="product-description">{{ product.description }}</p>
+              <div class="product-price">${{ product.retailPrice }}</div>
+              <div class="product-stock" *ngIf="product.stock < 10">Only {{ product.stock }} left!</div>
+            </div>
+          </div>
         </div>
       </div>
+      <button class="carousel-arrow right-arrow" (click)="scrollRight()" [disabled]="isAtEnd">❯</button>
     </div>
     <div class="view-all">
       <button class="btn-secondary" (click)="viewAllProducts()">View All Products</button>

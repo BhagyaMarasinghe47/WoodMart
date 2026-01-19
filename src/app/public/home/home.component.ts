@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
@@ -10,9 +10,12 @@ import { Product, Category } from '../../core/models/product.model';
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
+  @ViewChild('scrollContainer') scrollContainer!: ElementRef;
   featuredProducts: Product[] = [];
   categories: Category[] = [];
   loading = true;
+  isAtStart = true;
+  isAtEnd = false;
 
   constructor(
     private productService: ProductService,
@@ -47,6 +50,24 @@ export class HomeComponent implements OnInit {
         console.error('Error loading categories:', error);
       }
     });
+  }
+
+  scrollLeft(): void {
+    const container = this.scrollContainer.nativeElement;
+    container.scrollBy({ left: -310, behavior: 'smooth' });
+    setTimeout(() => this.checkScrollPosition(), 300);
+  }
+
+  scrollRight(): void {
+    const container = this.scrollContainer.nativeElement;
+    container.scrollBy({ left: 310, behavior: 'smooth' });
+    setTimeout(() => this.checkScrollPosition(), 300);
+  }
+
+  checkScrollPosition(): void {
+    const container = this.scrollContainer.nativeElement;
+    this.isAtStart = container.scrollLeft <= 0;
+    this.isAtEnd = container.scrollLeft + container.clientWidth >= container.scrollWidth - 5;
   }
 
   addToCart(product: Product): void {

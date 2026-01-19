@@ -38,7 +38,7 @@
         </a>
         
         <!-- My Orders link -->
-        <a routerLink="/customer/orders" routerLinkActive="active">My Orders</a>
+        <a routerLink="/customer/dashboard" routerLinkActive="active">My Orders</a>
         
         <!-- Profile dropdown -->
         <div class="profile-menu">
@@ -49,6 +49,7 @@
           </button>
           @if (showProfileDropdown) {
             <div class="profile-dropdown">
+              <button (click)="navigateToDashboard()">Dashboard</button>
               <button (click)="logout()">Logout</button>
             </div>
           }

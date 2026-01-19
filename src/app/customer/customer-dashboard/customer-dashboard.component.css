@@ -133,3 +133,62 @@
   margin: 8px 0;
   color: #666;
 }
+
+/* Order Items Section */
+.order-items {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #ecf0f1;
+}
+
+.order-items h4 {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.items-grid {
+  display: grid;
+  gap: 15px;
+}
+
+.order-item {
+  display: flex;
+  gap: 15px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  align-items: center;
+}
+
+.item-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-name {
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 5px 0;
+  font-size: 1rem;
+}
+
+.item-info {
+  color: #666;
+  margin: 0 0 5px 0;
+  font-size: 0.9rem;
+}
+
+.item-subtotal {
+  font-weight: 700;
+  color: #4a90e2;
+  margin: 0;
+  font-size: 1rem;
+}

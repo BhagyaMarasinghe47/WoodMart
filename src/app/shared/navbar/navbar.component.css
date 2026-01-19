@@ -210,7 +210,7 @@
 }
 
 .btn-login {
-  background: #8B4513;
+  background: #27ae60;
   color: white;
   border: none;
   padding: 8px 20px;
@@ -221,7 +221,7 @@
 }
 
 .btn-login:hover {
-  background: #6F3612;
+  background: #219150;
 }
 
 .btn-register {
