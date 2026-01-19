@@ -150,6 +150,11 @@ export class CategoryService {
   constructor() { }
 
   // Get all main categories
+  getCategories(): Category[] {
+    return this.categories;
+  }
+
+  // Get all main categories (alias for backwards compatibility)
   getAllCategories(): Category[] {
     return this.categories;
   }

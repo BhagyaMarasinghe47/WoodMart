@@ -3,12 +3,15 @@ export interface Product {
   name: string;
   description: string;
   category: string;
+  subcategory?: string;
   wholesalePrice: number;
   retailPrice: number;
   stock: number;
   imageUrl: string;
-  craftsmanId: string;
-  craftsmanName: string;
+  craftsmanId?: string;
+  craftsmanName?: string;
+  vendorId?: string;
+  vendorName?: string;
   createdAt: Date;
   isActive: boolean;
   dimensions?: string;
