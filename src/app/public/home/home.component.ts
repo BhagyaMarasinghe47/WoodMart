@@ -16,6 +16,33 @@ export class HomeComponent implements OnInit {
   loading = true;
   isAtStart = true;
   isAtEnd = false;
+  shopTheLook = [
+    {
+      title: 'Bedroom Serenity',
+      category: 'Bedroom Furniture',
+      imageUrl: 'assets/images/bedroom-serenity.jpg'
+    },
+    {
+      title: 'Modern Office',
+      category: 'Office Furniture',
+      imageUrl: 'assets/images/office-space.jpg'
+    },
+    {
+      title: 'Dining Elegance',
+      category: 'Dining Room Furniture',
+      imageUrl: 'assets/images/dining-elegance.jpg'
+    },
+    {
+      title: 'Cozy Retreat',
+      category: 'Living Room Furniture',
+      imageUrl: 'assets/images/cozy-nook.jpg'
+    },
+    {
+      title: 'Dining Room',
+      category: 'Dining Room Furniture',
+      imageUrl: 'assets/images/dining-room.jpg'
+    }
+  ];
 
   constructor(
     private productService: ProductService,
@@ -54,13 +81,13 @@ export class HomeComponent implements OnInit {
 
   scrollLeft(): void {
     const container = this.scrollContainer.nativeElement;
-    container.scrollBy({ left: -310, behavior: 'smooth' });
+    container.scrollBy({ left: -240, behavior: 'smooth' });
     setTimeout(() => this.checkScrollPosition(), 300);
   }
 
   scrollRight(): void {
     const container = this.scrollContainer.nativeElement;
-    container.scrollBy({ left: 310, behavior: 'smooth' });
+    container.scrollBy({ left: 240, behavior: 'smooth' });
     setTimeout(() => this.checkScrollPosition(), 300);
   }
 

@@ -26,6 +26,7 @@ import { RegisterComponent } from './auth/register/register.component';
 
 // Role-based Components
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
+import { UserManagementComponent } from './admin/user-management/user-management.component';
 import { CraftsmanDashboardComponent } from './craftsman/craftsman-dashboard/craftsman-dashboard.component';
 import { VendorDashboardComponent } from './vendor/vendor-dashboard/vendor-dashboard.component';
 import { CustomerDashboardComponent } from './customer/customer-dashboard/customer-dashboard.component';
@@ -50,6 +51,7 @@ import { CustomerDashboardComponent } from './customer/customer-dashboard/custom
     RegisterComponent,
     // Role-based
     AdminDashboardComponent,
+    UserManagementComponent,
     CraftsmanDashboardComponent,
     VendorDashboardComponent,
     CustomerDashboardComponent

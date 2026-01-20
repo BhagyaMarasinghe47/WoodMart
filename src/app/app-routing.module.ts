@@ -19,6 +19,7 @@ import { RegisterComponent } from './auth/register/register.component';
 
 // Role-based Components
 import { AdminDashboardComponent } from './admin/admin-dashboard/admin-dashboard.component';
+import { UserManagementComponent } from './admin/user-management/user-management.component';
 import { CraftsmanDashboardComponent } from './craftsman/craftsman-dashboard/craftsman-dashboard.component';
 import { VendorDashboardComponent } from './vendor/vendor-dashboard/vendor-dashboard.component';
 import { CustomerDashboardComponent } from './customer/customer-dashboard/customer-dashboard.component';
@@ -44,6 +45,7 @@ const routes: Routes = [
     data: { roles: [UserRole.ADMIN] },
     children: [
       { path: 'dashboard', component: AdminDashboardComponent },
+      { path: 'user-management', component: UserManagementComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
