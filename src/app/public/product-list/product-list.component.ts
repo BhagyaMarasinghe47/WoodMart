@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Product } from '../../core/models/product.model';
+import { UserRole } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-product-list',
@@ -15,10 +17,17 @@ export class ProductListComponent implements OnInit {
   loading = true;
   searchQuery = '';
   selectedCategory = '';
+  showFilters = false;
+  sortBy = 'best-selling';
+  inStockOnly = false;
+  minPrice: number | null = null;
+  maxPrice: number | null = null;
+  priceExpanded = true;
 
   constructor(
     private productService: ProductService,
     private cartService: CartService,
+    private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router
   ) { }
@@ -35,7 +44,13 @@ export class ProductListComponent implements OnInit {
     this.loading = true;
     this.productService.getAllProducts().subscribe({
       next: (products) => {
-        this.products = products;
+        // If vendor is logged in, show only their products
+        const currentUser = this.authService.currentUserValue;
+        if (currentUser && currentUser.role === UserRole.VENDOR) {
+          this.products = products.filter(p => p.vendorId === currentUser.id);
+        } else {
+          this.products = products;
+        }
         this.applyFilters();
         this.loading = false;
       },
@@ -65,7 +80,41 @@ export class ProductListComponent implements OnInit {
       );
     }
 
+    // Filter by in stock only
+    if (this.inStockOnly) {
+      filtered = filtered.filter(p => p.stock > 0);
+    }
+
+    // Filter by price range
+    if (this.minPrice !== null && this.minPrice > 0) {
+      filtered = filtered.filter(p => p.retailPrice >= this.minPrice!);
+    }
+    if (this.maxPrice !== null && this.maxPrice > 0) {
+      filtered = filtered.filter(p => p.retailPrice <= this.maxPrice!);
+    }
+
+    // Apply sorting
+    this.sortProducts(filtered);
+
     this.filteredProducts = filtered;
+  }
+
+  sortProducts(products: Product[]): void {
+    switch (this.sortBy) {
+      case 'price-low':
+        products.sort((a, b) => a.retailPrice - b.retailPrice);
+        break;
+      case 'price-high':
+        products.sort((a, b) => b.retailPrice - a.retailPrice);
+        break;
+      case 'name':
+        products.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case 'best-selling':
+      default:
+        // Keep original order or implement best-selling logic
+        break;
+    }
   }
 
   onSearchChange(): void {
@@ -74,7 +123,6 @@ export class ProductListComponent implements OnInit {
 
   onCategoryChange(): void {
     this.applyFilters();
-    // Update URL
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { category: this.selectedCategory || null },
@@ -82,14 +130,32 @@ export class ProductListComponent implements OnInit {
     });
   }
 
+  onSortChange(): void {
+    this.applyFilters();
+  }
+
+  toggleFilters(): void {
+    this.showFilters = !this.showFilters;
+  }
+
+  togglePriceSection(): void {
+    this.priceExpanded = !this.priceExpanded;
+  }
+
   clearFilters(): void {
     this.selectedCategory = '';
     this.searchQuery = '';
+    this.inStockOnly = false;
+    this.minPrice = null;
+    this.maxPrice = null;
+    this.sortBy = 'best-selling';
     this.router.navigate(['/products']);
     this.applyFilters();
   }
 
   addToCart(product: Product): void {
+    if (product.stock === 0) return;
+    
     this.cartService.addToCart(
       product.id,
       product.name,

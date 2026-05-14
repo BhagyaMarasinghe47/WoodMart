@@ -1,5 +1,5 @@
 <app-navbar></app-navbar>
-<app-category-bar></app-category-bar>
+<app-category-bar *ngIf="shouldShowCategoryBar()"></app-category-bar>
 <main>
   <router-outlet></router-outlet>
 </main>

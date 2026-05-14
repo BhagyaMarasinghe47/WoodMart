@@ -1,45 +1,312 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
+import { CategoryService, Category } from '../../core/services/category.service';
+import { 
+  CraftsmanService, 
+  DashboardStats, 
+  WholesaleProduct, 
+  VendorOrder, 
+  InventoryItem,
+  OrderStatus,
+  ProductStatus 
+} from '../../core/services/craftsman.service';
 
 @Component({
   selector: 'app-craftsman-dashboard',
-  template: `
-    <div class="dashboard-container">
-      <div class="dashboard-header">
-        <h1>Craftsman Dashboard</h1>
-        <button class="btn-logout" (click)="logout()">Logout</button>
-      </div>
-      <div class="content">
-        <h2>Manage Your Products</h2>
-        <p>This is your craftsman workspace. You can manage your wholesale products here.</p>
-        <div class="info-card">
-          <h3>✅ Features Available:</h3>
-          <ul>
-            <li>Manage wholesale product catalog</li>
-            <li>View vendor bulk orders</li>
-            <li>Update production status</li>
-            <li>Track inventory levels</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .dashboard-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-    .dashboard-header h1 { font-size: 2.5rem; color: #333; }
-    .btn-logout { padding: 10px 20px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
-    .content { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .content h2 { color: #333; margin-bottom: 15px; }
-    .content p { color: #666; margin-bottom: 30px; }
-    .info-card { background: #f8f9fa; padding: 25px; border-radius: 8px; border-left: 4px solid #8B4513; }
-    .info-card h3 { color: #333; margin-bottom: 15px; }
-    .info-card ul { color: #666; line-height: 2; }
-  `]
+  templateUrl: './craftsman-dashboard.component.html',
+  styleUrls: ['./craftsman-dashboard.component.css']
 })
-export class CraftsmanDashboardComponent {
-  constructor(private authService: AuthService) { }
+export class CraftsmanDashboardComponent implements OnInit {
+  activeTab: 'overview' | 'products' | 'orders' | 'inventory' = 'overview';
   
+  stats: DashboardStats = {
+    totalProducts: 0,
+    activeVendorOrders: 0,
+    ordersInProduction: 0,
+    lowStockProducts: 0
+  };
+
+  // Products
+  products: WholesaleProduct[] = [];
+  showProductForm = false;
+  editingProduct: WholesaleProduct | null = null;
+  categories: Category[] = [];
+  selectedCategory: Category | null = null;
+  productForm: Partial<WholesaleProduct> = {
+    name: '',
+    description: '',
+    category: '',
+    subcategory: '',
+    wholesalePrice: 0,
+    availableQuantity: 0,
+    material: '',
+    dimensions: '',
+    weight: '',
+    imageUrl: '',
+    status: ProductStatus.ACTIVE
+  };
+  imagePreview: string = '';
+  showDeleteConfirm = false;
+  productToDelete: string | null = null;
+
+  // Orders
+  orders: VendorOrder[] = [];
+  orderStatuses = Object.values(OrderStatus);
+  editingOrder: VendorOrder | null = null;
+  showOrderModal = false;
+  orderForm = {
+    status: OrderStatus.PENDING,
+    expectedDeliveryDate: ''
+  };
+
+  // Inventory
+  inventory: InventoryItem[] = [];
+  editingQuantity: string | null = null;
+  tempQuantityValue: number = 0;
+
+  loading = false;
+  ProductStatus = ProductStatus;
+  OrderStatus = OrderStatus;
+
+  constructor(
+    private authService: AuthService,
+    private craftsmanService: CraftsmanService,
+    private categoryService: CategoryService
+  ) {}
+
+  ngOnInit(): void {
+    this.loadDashboardData();
+    this.loadCategories();
+  }
+
+  loadDashboardData(): void {
+    this.loading = true;
+
+    this.craftsmanService.getDashboardStats().subscribe(stats => {
+      this.stats = stats;
+    });
+
+    this.craftsmanService.getWholesaleProducts().subscribe(products => {
+      this.products = products;
+    });
+
+    this.craftsmanService.getVendorOrders().subscribe(orders => {
+      this.orders = orders;
+    });
+
+    this.craftsmanService.getInventory().subscribe(inventory => {
+      this.inventory = inventory;
+      this.loading = false;
+    });
+  }
+
+  loadCategories(): void {
+    this.categories = this.categoryService.getAllCategories();
+  }
+
+  switchTab(tab: 'overview' | 'products' | 'orders' | 'inventory'): void {
+    this.activeTab = tab;
+  }
+
+  // Product Management
+  openProductForm(product?: WholesaleProduct): void {
+    this.showProductForm = true;
+    if (product) {
+      this.editingProduct = product;
+      this.productForm = { ...product };
+      this.imagePreview = product.imageUrl;
+      const category = this.categories.find(c => c.slug === product.category);
+      if (category) {
+        this.selectedCategory = category;
+      }
+    } else {
+      this.resetProductForm();
+    }
+  }
+
+  closeProductForm(): void {
+    this.showProductForm = false;
+    this.resetProductForm();
+  }
+
+  resetProductForm(): void {
+    this.editingProduct = null;
+    this.selectedCategory = null;
+    this.productForm = {
+      name: '',
+      description: '',
+      category: '',
+      subcategory: '',
+      wholesalePrice: 0,
+      availableQuantity: 0,
+      material: '',
+      dimensions: '',
+      weight: '',
+      imageUrl: '',
+      status: ProductStatus.ACTIVE
+    };
+    this.imagePreview = '';
+  }
+
+  onCategoryChange(categorySlug: string): void {
+    this.selectedCategory = this.categories.find(c => c.slug === categorySlug) || null;
+    this.productForm.category = categorySlug;
+    this.productForm.subcategory = '';
+  }
+
+  onImageUrlChange(url: string): void {
+    this.productForm.imageUrl = url;
+    this.imagePreview = url;
+  }
+
+  saveProduct(): void {
+    const currentUser = this.authService.currentUserValue;
+    if (!currentUser) return;
+
+    if (!this.productForm.name || !this.productForm.category || 
+        !this.productForm.wholesalePrice || this.productForm.availableQuantity === undefined) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    if (this.editingProduct) {
+      this.craftsmanService.updateWholesaleProduct(this.editingProduct.id, this.productForm as WholesaleProduct)
+        .subscribe(success => {
+          if (success) {
+            this.loadDashboardData();
+            this.closeProductForm();
+            alert('Product updated successfully!');
+          }
+        });
+    } else {
+      const newProduct: Omit<WholesaleProduct, 'id' | 'createdAt'> = {
+        name: this.productForm.name!,
+        description: this.productForm.description || '',
+        category: this.productForm.category!,
+        subcategory: this.productForm.subcategory,
+        wholesalePrice: this.productForm.wholesalePrice!,
+        availableQuantity: this.productForm.availableQuantity!,
+        material: this.productForm.material || '',
+        dimensions: this.productForm.dimensions,
+        weight: this.productForm.weight,
+        imageUrl: this.productForm.imageUrl || 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=500',
+        status: this.productForm.status || ProductStatus.ACTIVE,
+        craftsmanId: currentUser.id
+      };
+
+      this.craftsmanService.addWholesaleProduct(newProduct).subscribe(product => {
+        this.loadDashboardData();
+        this.closeProductForm();
+        alert('Product added successfully!');
+      });
+    }
+  }
+
+  confirmDeleteProduct(productId: string): void {
+    this.productToDelete = productId;
+    this.showDeleteConfirm = true;
+  }
+
+  cancelDelete(): void {
+    this.productToDelete = null;
+    this.showDeleteConfirm = false;
+  }
+
+  deleteProduct(): void {
+    if (this.productToDelete) {
+      this.craftsmanService.deleteWholesaleProduct(this.productToDelete).subscribe(success => {
+        if (success) {
+          this.loadDashboardData();
+          this.cancelDelete();
+          alert('Product deleted successfully!');
+        }
+      });
+    }
+  }
+
+  getProductStatusClass(status: ProductStatus): string {
+    switch (status) {
+      case ProductStatus.ACTIVE: return 'status-active';
+      case ProductStatus.OUT_OF_STOCK: return 'status-out-of-stock';
+      case ProductStatus.DISCONTINUED: return 'status-discontinued';
+      default: return '';
+    }
+  }
+
+  // Order Management
+  openOrderModal(order: VendorOrder): void {
+    this.editingOrder = order;
+    this.orderForm = {
+      status: order.status,
+      expectedDeliveryDate: this.formatDateForInput(order.expectedDeliveryDate)
+    };
+    this.showOrderModal = true;
+  }
+
+  closeOrderModal(): void {
+    this.showOrderModal = false;
+    this.editingOrder = null;
+  }
+
+  updateOrder(): void {
+    if (this.editingOrder) {
+      const expectedDate = this.orderForm.expectedDeliveryDate ? 
+        new Date(this.orderForm.expectedDeliveryDate) : undefined;
+      
+      this.craftsmanService.updateOrderStatus(
+        this.editingOrder.id, 
+        this.orderForm.status,
+        expectedDate
+      ).subscribe(success => {
+        if (success) {
+          this.loadDashboardData();
+          this.closeOrderModal();
+          alert('Order updated successfully!');
+        }
+      });
+    }
+  }
+
+  formatDateForInput(date: Date): string {
+    const d = new Date(date);
+    return d.toISOString().split('T')[0];
+  }
+
+  getOrderStatusClass(status: OrderStatus): string {
+    switch (status) {
+      case OrderStatus.PENDING: return 'order-pending';
+      case OrderStatus.ACCEPTED: return 'order-accepted';
+      case OrderStatus.IN_PRODUCTION: return 'order-production';
+      case OrderStatus.READY_FOR_DISPATCH: return 'order-ready';
+      case OrderStatus.DISPATCHED: return 'order-dispatched';
+      default: return '';
+    }
+  }
+
+  // Inventory Management
+  startEditQuantity(itemId: string, currentQuantity: number): void {
+    this.editingQuantity = itemId;
+    this.tempQuantityValue = currentQuantity;
+  }
+
+  saveQuantity(itemId: string): void {
+    this.craftsmanService.updateInventoryQuantity(itemId, this.tempQuantityValue)
+      .subscribe(success => {
+        if (success) {
+          this.loadDashboardData();
+          this.editingQuantity = null;
+        }
+      });
+  }
+
+  cancelEditQuantity(): void {
+    this.editingQuantity = null;
+  }
+
+  isLowStock(quantity: number): boolean {
+    return quantity < 5;
+  }
+
   logout(): void {
     this.authService.logout();
   }

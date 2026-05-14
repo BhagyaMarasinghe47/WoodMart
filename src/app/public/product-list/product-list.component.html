@@ -1,38 +1,88 @@
 <div class="product-list-container">
-  <div class="header">
-    <h1>Browse Products</h1>
-    <p *ngIf="selectedCategory">Category: {{ selectedCategory }}</p>
-  </div>
-
-  <!-- Filters -->
-  <div class="filters">
-    <div class="filter-group">
-      <label for="search">Search:</label>
-      <input 
-        type="text" 
-        id="search" 
-        [(ngModel)]="searchQuery" 
-        (ngModelChange)="onSearchChange()"
-        placeholder="Search products...">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <button class="btn-show-filters" (click)="toggleFilters()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="4" y1="6" x2="20" y2="6"></line>
+        <line x1="4" y1="12" x2="20" y2="12"></line>
+        <line x1="4" y1="18" x2="20" y2="18"></line>
+      </svg>
+      Show filters
+    </button>
+    
+    <div class="product-count">
+      {{ filteredProducts.length }} products
     </div>
-
-    <div class="filter-group">
-      <label for="category">Category:</label>
-      <select id="category" [(ngModel)]="selectedCategory" (ngModelChange)="onCategoryChange()">
-        <option value="">All Categories</option>
-        <option value="furniture">Furniture</option>
-        <option value="decor">Decor</option>
-        <option value="kitchenware">Kitchenware</option>
+    
+    <div class="sort-dropdown">
+      <label>Sort by:</label>
+      <select [(ngModel)]="sortBy" (ngModelChange)="onSortChange()">
+        <option value="best-selling">Best selling</option>
+        <option value="price-low">Price: Low to High</option>
+        <option value="price-high">Price: High to Low</option>
+        <option value="name">Name: A to Z</option>
       </select>
     </div>
-
-    <button class="btn-clear" (click)="clearFilters()">Clear Filters</button>
   </div>
 
-  <!-- Results -->
-  <div class="results-info">
-    <p>Showing {{ filteredProducts.length }} product(s)</p>
+  <!-- Filter Sidebar -->
+  <div class="filter-sidebar" [class.active]="showFilters">
+    <div class="filter-header">
+      <h2>Filters</h2>
+      <button class="btn-close" (click)="toggleFilters()">✕</button>
+    </div>
+    
+    <div class="filter-content">
+      <!-- Sort By -->
+      <div class="filter-section">
+        <div class="filter-section-header">
+          <span>Sort by</span>
+        </div>
+        <select [(ngModel)]="sortBy" (ngModelChange)="onSortChange()" class="filter-select">
+          <option value="best-selling">Best selling</option>
+          <option value="price-low">Price: Low to High</option>
+          <option value="price-high">Price: High to Low</option>
+          <option value="name">Name: A to Z</option>
+        </select>
+      </div>
+
+      <!-- In Stock Only -->
+      <div class="filter-section">
+        <div class="filter-toggle">
+          <span>In stock only</span>
+          <label class="toggle-switch">
+            <input type="checkbox" [(ngModel)]="inStockOnly" (ngModelChange)="applyFilters()">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Price Range -->
+      <div class="filter-section price-section">
+        <div class="filter-section-header collapsible" (click)="togglePriceSection()">
+          <span>Price</span>
+          <span class="arrow" [class.expanded]="priceExpanded">▼</span>
+        </div>
+        <div class="price-inputs" *ngIf="priceExpanded">
+          <div class="price-input-group">
+            <label>Rs</label>
+            <input type="number" [(ngModel)]="minPrice" placeholder="0" min="0">
+          </div>
+          <span class="price-separator">to</span>
+          <div class="price-input-group">
+            <label>Rs</label>
+            <input type="number" [(ngModel)]="maxPrice" placeholder="400000" min="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- Apply Button -->
+      <button class="btn-apply" (click)="applyFilters()">Apply</button>
+    </div>
   </div>
+
+  <!-- Overlay -->
+  <div class="overlay" [class.active]="showFilters" (click)="toggleFilters()"></div>
 
   <!-- Loading State -->
   <div *ngIf="loading" class="loading">Loading products...</div>
@@ -46,26 +96,20 @@
   <!-- Products Grid -->
   <div *ngIf="!loading && filteredProducts.length > 0" class="products-grid">
     <div *ngFor="let product of filteredProducts" class="product-card">
-      <img [src]="product.imageUrl" [alt]="product.name" (click)="viewProduct(product.id)">
-      <div class="product-info">
-        <h3 (click)="viewProduct(product.id)">{{ product.name }}</h3>
-        <p class="product-description">{{ product.description }}</p>
-        <div class="product-details">
-          <span class="craftsman">By {{ product.craftsmanName }}</span>
-        </div>
-        <div class="product-price">${{ product.retailPrice }}</div>
-        <div class="product-stock" *ngIf="product.stock < 10 && product.stock > 0">
-          Only {{ product.stock }} left!
-        </div>
-        <div class="product-stock out-of-stock" *ngIf="product.stock === 0">
-          Out of Stock
-        </div>
-        <button 
-          class="btn-add-cart" 
-          (click)="addToCart(product)" 
-          [disabled]="product.stock === 0">
-          {{ product.stock > 0 ? 'Add to Cart' : 'Out of Stock' }}
+      <div class="product-image-container">
+        <img [src]="product.imageUrl" [alt]="product.name" (click)="viewProduct(product.id)">
+        <div class="product-badge" *ngIf="product.stock === 0">OUT OF STOCK</div>
+        <button class="btn-wishlist" (click)="addToCart(product)" [disabled]="product.stock === 0" [title]="product.stock > 0 ? 'Add to Cart' : 'Out of Stock'">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
         </button>
+      </div>
+      <div class="product-info">
+        <div class="product-vendor">{{ product.craftsmanName || 'CEYLON FURNITURE' }}</div>
+        <h3 (click)="viewProduct(product.id)">{{ product.name }}</h3>
       </div>
     </div>
   </div>

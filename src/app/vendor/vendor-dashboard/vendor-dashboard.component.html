@@ -1,7 +1,6 @@
 <div class="vendor-dashboard">
   <div class="dashboard-header">
     <h1>Vendor Dashboard</h1>
-    <button class="btn-logout" (click)="logout()">Logout</button>
   </div>
 
   <!-- Navigation Tabs -->
@@ -10,31 +9,31 @@
       class="tab-btn" 
       [class.active]="activeTab === 'overview'"
       (click)="switchTab('overview')">
-      <span class="tab-icon">📊</span> Overview
+      Overview
     </button>
     <button 
       class="tab-btn" 
       [class.active]="activeTab === 'orders'"
       (click)="switchTab('orders')">
-      <span class="tab-icon">📦</span> Customer Orders
+      Customer Orders
     </button>
     <button 
       class="tab-btn" 
-      [class.active]="activeTab === 'products'"
-      (click)="switchTab('products')">
-      <span class="tab-icon">🪑</span> My Products
+      [class.active]="activeTab === 'catalog'"
+      (click)="switchTab('catalog')">
+      My Catalog
     </button>
     <button 
       class="tab-btn" 
       [class.active]="activeTab === 'inventory'"
       (click)="switchTab('inventory')">
-      <span class="tab-icon">📋</span> Inventory
+      Inventory
     </button>
     <button 
       class="tab-btn" 
       [class.active]="activeTab === 'craftsmen'"
       (click)="switchTab('craftsmen')">
-      <span class="tab-icon">👨‍🔧</span> Craftsmen
+      Craftsmen & Products
     </button>
   </div>
 
@@ -48,34 +47,51 @@
       <!-- Summary Cards -->
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="stat-icon">📦</div>
+
+          <div class="stat-info">
+            <h3>Total Products</h3>
+            <p class="stat-value">{{ stats.totalProducts }}</p>
+            <small class="stat-description">Published on website</small>
+          </div>
+        </div>
+        
+        <div class="stat-card warning">
+          <div class="stat-info">
+            <h3>Low Stock Products</h3>
+            <p class="stat-value">{{ stats.productsLowInStock }}</p>
+            <small class="stat-description">Need restocking</small>
+          </div>
+        </div>
+        
+        <div class="stat-card">
           <div class="stat-info">
             <h3>Total Orders</h3>
             <p class="stat-value">{{ stats.totalOrders }}</p>
+            <small class="stat-description">All time</small>
+          </div>
+        </div>
+        
+        <div class="stat-card alert">
+          <div class="stat-info">
+            <h3>Pending Orders</h3>
+            <p class="stat-value">{{ stats.pendingOrders }}</p>
+            <small class="stat-description">Require action</small>
           </div>
         </div>
         
         <div class="stat-card">
-          <div class="stat-icon">📋</div>
           <div class="stat-info">
-            <h3>Inventory Items</h3>
-            <p class="stat-value">{{ stats.totalInventoryItems }}</p>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon">👨‍🔧</div>
-          <div class="stat-info">
-            <h3>Craftsmen</h3>
-            <p class="stat-value">{{ stats.totalCraftsmen }}</p>
+            <h3>Craftsmen Connected</h3>
+            <p class="stat-value">{{ stats.totalCraftsmenConnected }}</p>
+            <small class="stat-description">Active partnerships</small>
           </div>
         </div>
         
         <div class="stat-card highlight">
-          <div class="stat-icon">💰</div>
           <div class="stat-info">
             <h3>Monthly Sales</h3>
             <p class="stat-value">Rs. {{ stats.monthlySales.toLocaleString() }}</p>
+            <small class="stat-description">This month</small>
           </div>
         </div>
       </div>
@@ -87,11 +103,14 @@
           <button class="action-btn" (click)="switchTab('orders')">
             View Orders
           </button>
+          <button class="action-btn" (click)="switchTab('catalog')">
+            Manage Catalog
+          </button>
           <button class="action-btn" (click)="switchTab('inventory')">
-            Manage Inventory
+            Check Inventory
           </button>
           <button class="action-btn" (click)="switchTab('craftsmen')">
-            Browse Craftsmen
+            Browse Craftsmen Products
           </button>
         </div>
       </div>
@@ -166,12 +185,13 @@
               <th>Category</th>
               <th>Craftsman</th>
               <th>Stock Quantity</th>
+              <th>Stock Status</th>
               <th>Retail Price</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let item of inventoryItems">
+            <tr *ngFor="let item of inventoryItems" [class.low-stock-row]="item.stockQuantity < 5">
               <td>
                 <img [src]="item.imageUrl" [alt]="item.productName" class="product-thumbnail">
               </td>
@@ -184,7 +204,7 @@
                     {{ item.stockQuantity }} units
                   </span>
                   <button class="btn-edit-small" (click)="startEditStock(item.id, item.stockQuantity)">
-                    ✏️
+                    Edit
                   </button>
                 </div>
                 <div *ngIf="editingStock === item.id" class="edit-field">
@@ -193,15 +213,20 @@
                     [(ngModel)]="tempStockValue" 
                     min="0"
                     class="input-small">
-                  <button class="btn-save-small" (click)="saveStock(item.id)">✓</button>
-                  <button class="btn-cancel-small" (click)="cancelEditStock()">✗</button>
+                  <button class="btn-save-small" (click)="saveStock(item.id)">Save</button>
+                  <button class="btn-cancel-small" (click)="cancelEditStock()">Cancel</button>
                 </div>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="getStockStatusClass(item.stockQuantity)">
+                  {{ getStockStatus(item.stockQuantity) }}
+                </span>
               </td>
               <td>
                 <div *ngIf="editingPrice !== item.id" class="price-display">
                   Rs. {{ item.retailPrice.toLocaleString() }}
                   <button class="btn-edit-small" (click)="startEditPrice(item.id, item.retailPrice)">
-                    ✏️
+                    Edit
                   </button>
                 </div>
                 <div *ngIf="editingPrice === item.id" class="edit-field">
@@ -210,12 +235,14 @@
                     [(ngModel)]="tempPriceValue" 
                     min="0"
                     class="input-small">
-                  <button class="btn-save-small" (click)="savePrice(item.id)">✓</button>
-                  <button class="btn-cancel-small" (click)="cancelEditPrice()">✗</button>
+                  <button class="btn-save-small" (click)="savePrice(item.id)">Save</button>
+                  <button class="btn-cancel-small" (click)="cancelEditPrice()">Cancel</button>
                 </div>
               </td>
               <td>
-                <button class="btn-action">View Details</button>
+                <button class="btn-reorder" (click)="requestBulkOrder(item)">
+                  Request Bulk Order
+                </button>
               </td>
             </tr>
           </tbody>
@@ -228,7 +255,7 @@
       <div class="products-header">
         <h2 class="section-title">My Products</h2>
         <button class="btn-add-product" (click)="openProductForm()">
-          <span class="icon">➕</span> Add New Product
+          Add New Product
         </button>
       </div>
 
@@ -466,37 +493,571 @@
       </div>
     </div>
 
-    <!-- CRAFTSMEN TAB -->
-    <div *ngIf="activeTab === 'craftsmen'" class="tab-content">
-      <h2 class="section-title">Registered Craftsmen</h2>
+    <!-- VENDOR CATALOG TAB -->
+    <div *ngIf="activeTab === 'catalog'" class="tab-content">
+      <h2 class="section-title">My Product Catalog</h2>
+      <p class="section-description">Manage products selected from craftsmen. Set retail prices, manage stock, and publish/unpublish products.</p>
       
-      <div class="craftsmen-grid">
-        <div *ngFor="let craftsman of craftsmen" class="craftsman-card">
-          <div class="craftsman-header">
-            <div class="craftsman-avatar">{{ craftsman.name.charAt(0) }}</div>
-            <div class="craftsman-info">
-              <h3>{{ craftsman.name }}</h3>
-              <p class="location">📍 {{ craftsman.location }}</p>
+      <div class="catalog-table" *ngIf="vendorCatalog.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Product Name</th>
+              <th>Craftsman</th>
+              <th>Wholesale</th>
+              <th>Retail Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of vendorCatalog">
+              <td>
+                <img [src]="product.imageUrl" [alt]="product.name" class="product-thumbnail">
+              </td>
+              <td>
+                <strong>{{ product.name }}</strong>
+                <br>
+                <small class="category-text">{{ product.category }}</small>
+              </td>
+              <td>{{ product.craftsmanName }}</td>
+              <td class="price">Rs. {{ product.wholesalePrice.toLocaleString() }}</td>
+              <td class="price">Rs. {{ product.retailPrice.toLocaleString() }}</td>
+              <td>
+                <span [ngClass]="getStockStatusClass(product.stock)">
+                  {{ product.stock }} units
+                </span>
+              </td>
+              <td>
+                <span class="status-badge" [ngClass]="getCatalogStatusClass(product)">
+                  {{ getCatalogStatus(product) }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons-inline">
+                  <button class="btn-action-small btn-edit" (click)="openEditCatalogModal(product)">
+                    Edit
+                  </button>
+                  <button 
+                    class="btn-action-small" 
+                    [class.btn-publish]="!product.isPublished"
+                    [class.btn-unpublish]="product.isPublished"
+                    (click)="togglePublish(product.id)">
+                    {{ product.isPublished ? 'Unpublish' : 'Publish' }}
+                  </button>
+                  <button class="btn-action-small btn-remove" (click)="removeFromCatalog(product.id)">
+                    Remove
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div *ngIf="vendorCatalog.length === 0" class="empty-state">
+        <h3>No Products in Catalog</h3>
+        <p>Browse craftsmen products and add them to your catalog</p>
+        <button class="btn-primary" (click)="switchTab('craftsmen')">
+          Browse Craftsmen Products
+        </button>
+      </div>
+    </div>
+
+    <!-- CRAFTSMEN & PRODUCTS TAB -->
+    <div *ngIf="activeTab === 'craftsmen'" class="tab-content">
+      <h2 class="section-title">Craftsmen & Product Selection</h2>
+      <p class="section-description">Browse craftsmen and select products to add to your catalog</p>
+      
+      <div class="craftsmen-products-container">
+        <!-- Craftsmen List -->
+        <div class="craftsmen-sidebar">
+          <h3>Registered Craftsmen</h3>
+          <div 
+            *ngFor="let craftsman of craftsmen" 
+            class="craftsman-item"
+            [class.active]="selectedCraftsmanId === craftsman.id"
+            (click)="viewCraftsmanProducts(craftsman.id)">
+            <div class="craftsman-avatar-small">{{ craftsman.name.charAt(0) }}</div>
+            <div class="craftsman-info-small">
+              <strong>{{ craftsman.name }}</strong>
+              <small class="product-count">{{ craftsman.productsCount }} products available</small>
             </div>
           </div>
-          
-          <div class="craftsman-details">
-            <p><strong>Email:</strong> {{ craftsman.email }}</p>
-            <p><strong>Phone:</strong> {{ craftsman.phone }}</p>
-            <p><strong>Specialization:</strong> {{ craftsman.specialization }}</p>
-            <div class="rating">
-              <span class="stars">⭐ {{ craftsman.rating }}</span>
-              <span class="products-count">{{ craftsman.productsCount }} products</span>
-            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <div class="products-display">
+          <div *ngIf="!selectedCraftsmanId" class="empty-state-small">
+            <p>Select a craftsman to view their products</p>
           </div>
-          
-          <div class="craftsman-actions">
-            <button class="btn-view-profile">View Profile</button>
-            <button class="btn-view-products">Browse Products</button>
+
+          <div *ngIf="selectedCraftsmanId">
+            <h3>Available Products</h3>
+            <div class="products-grid">
+              <div *ngFor="let product of getCraftsmanProducts(selectedCraftsmanId)" class="product-card">
+                <div class="product-image-container">
+                  <img [src]="product.imageUrl" [alt]="product.name">
+                  <span *ngIf="product.isSelectedByVendor" class="badge-selected">IN CATALOG</span>
+                </div>
+                <div class="product-card-body">
+                  <h4>{{ product.name }}</h4>
+                  <p class="product-description">{{ product.description }}</p>
+                  <div class="product-details">
+                    <p><strong>Wholesale:</strong> Rs. {{ product.wholesalePrice.toLocaleString() }}</p>
+                    <p><strong>Material:</strong> {{ product.material }}</p>
+                    <p *ngIf="product.dimensions"><strong>Dimensions:</strong> {{ product.dimensions }}</p>
+                  </div>
+                  <div class="product-card-actions">
+                    <button 
+                      class="btn-add-to-catalog" 
+                      [disabled]="product.isSelectedByVendor"
+                      (click)="openAddToCatalogModal(product)">
+                      {{ product.isSelectedByVendor ? 'In Your Catalog' : 'Add to Catalog' }}
+                    </button>
+                    <button 
+                      class="btn-bulk-order"
+                      (click)="openBulkOrderModal(product)">
+                      Request Bulk Order
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- MY PRODUCTS TAB (KEPT FOR LEGACY) -->
+    <div *ngIf="activeTab === 'products'" class="tab-content">
+      <div class="products-header">
+        <h2 class="section-title">My Products (Legacy)</h2>
+        <button class="btn-add-product" (click)="openProductForm()">
+          Add New Product
+        </button>
+      </div>
+
+      <!-- Products Table -->
+      <div class="products-table" *ngIf="vendorProducts.length > 0">
+        <table>
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Product Name</th>
+              <th>Category</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of vendorProducts">
+              <td>
+                <img [src]="product.imageUrl" [alt]="product.name" class="product-thumbnail">
+              </td>
+              <td>
+                <strong>{{ product.name }}</strong>
+              </td>
+              <td>{{ product.category }}</td>
+              <td>Rs. {{ product.retailPrice.toLocaleString() }}</td>
+              <td>{{ product.stock }}</td>
+              <td>
+                <span class="product-status" [ngClass]="getProductStatusClass(product)">
+                  {{ getProductStatus(product) }}
+                </span>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-edit-small" (click)="openProductForm(product)" title="Edit">
+                    ✏️
+                  </button>
+                  <button class="btn-delete-small" (click)="confirmDeleteProduct(product.id)" title="Delete">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="vendorProducts.length === 0" class="empty-state">
+        <div class="empty-icon">📦</div>
+        <h3>No Products Yet</h3>
+        <p>Start adding your furniture products to showcase them to customers</p>
+        <button class="btn-add-product" (click)="openProductForm()">
+          <span class="icon">➕</span> Add Your First Product
+        </button>
+      </div>
+
+      <!-- Product Form Modal -->
+      <div *ngIf="showProductForm" class="modal-overlay" (click)="closeProductForm()">
+        <div class="modal-content" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>{{ editingProduct ? 'Edit Product' : 'Add New Product' }}</h2>
+            <button class="btn-close" (click)="closeProductForm()">✕</button>
+          </div>
+
+          <form class="product-form">
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="productName">Product Name <span class="required">*</span></label>
+                <input 
+                  type="text" 
+                  id="productName" 
+                  [(ngModel)]="productForm.name"
+                  name="productName"
+                  placeholder="e.g., Handcrafted Oak Dining Table"
+                  required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="category">Category <span class="required">*</span></label>
+                <select 
+                  id="category" 
+                  [(ngModel)]="productForm.category"
+                  name="category"
+                  (change)="onCategoryChange(productForm.category!)"
+                  required>
+                  <option value="">Select Category</option>
+                  <option *ngFor="let cat of categories" [value]="cat.slug">
+                    {{ cat.name }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="subcategory">Subcategory</label>
+                <select 
+                  id="subcategory" 
+                  [(ngModel)]="productForm.subcategory"
+                  name="subcategory"
+                  [disabled]="!selectedCategory">
+                  <option value="">Select Subcategory</option>
+                  <option *ngFor="let sub of selectedCategory?.subCategories" [value]="sub.slug">
+                    {{ sub.name }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="price">Price (Rs.) <span class="required">*</span></label>
+                <input 
+                  type="number" 
+                  id="price" 
+                  [(ngModel)]="productForm.retailPrice"
+                  name="price"
+                  min="0"
+                  placeholder="0"
+                  required>
+              </div>
+
+              <div class="form-group">
+                <label for="stock">Stock Quantity <span class="required">*</span></label>
+                <input 
+                  type="number" 
+                  id="stock" 
+                  [(ngModel)]="productForm.stock"
+                  name="stock"
+                  min="0"
+                  placeholder="0"
+                  required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="material">Material</label>
+                <input 
+                  type="text" 
+                  id="material" 
+                  [(ngModel)]="productForm.material"
+                  name="material"
+                  placeholder="e.g., Oak, Pine, Mahogany">
+              </div>
+
+              <div class="form-group">
+                <label for="dimensions">Dimensions</label>
+                <input 
+                  type="text" 
+                  id="dimensions" 
+                  [(ngModel)]="productForm.dimensions"
+                  name="dimensions"
+                  placeholder="e.g., 180cm x 90cm x 75cm">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="weight">Weight</label>
+                <input 
+                  type="text" 
+                  id="weight" 
+                  [(ngModel)]="productForm.weight"
+                  name="weight"
+                  placeholder="e.g., 45kg">
+              </div>
+
+              <div class="form-group">
+                <label for="imageUrl">Image URL</label>
+                <input 
+                  type="url" 
+                  id="imageUrl" 
+                  [(ngModel)]="productForm.imageUrl"
+                  name="imageUrl"
+                  (ngModelChange)="onImageUrlChange($event)"
+                  placeholder="https://example.com/image.jpg">
+              </div>
+            </div>
+
+            <!-- Image Preview -->
+            <div class="form-row" *ngIf="imagePreview">
+              <div class="form-group full-width">
+                <label>Image Preview</label>
+                <div class="image-preview">
+                  <img [src]="imagePreview" alt="Product preview">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group full-width">
+                <label for="description">Description</label>
+                <textarea 
+                  id="description" 
+                  [(ngModel)]="productForm.description"
+                  name="description"
+                  rows="4"
+                  placeholder="Describe your product..."></textarea>
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" class="btn-cancel" (click)="closeProductForm()">
+                Cancel
+              </button>
+              <button type="button" class="btn-save" (click)="saveProduct()">
+                {{ editingProduct ? 'Update Product' : 'Save Product' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Delete Confirmation Modal -->
+      <div *ngIf="showDeleteConfirm" class="modal-overlay" (click)="cancelDelete()">
+        <div class="modal-content confirm-dialog" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <h2>Confirm Delete</h2>
+          </div>
+          <div class="modal-body">
+            <p>Are you sure you want to delete this product? This action cannot be undone.</p>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" (click)="cancelDelete()">
+              Cancel
+            </button>
+            <button type="button" class="btn-delete" (click)="deleteProduct()">
+              Delete Product
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Add to Catalog Modal -->
+  <div *ngIf="showAddToCatalogModal" class="modal-overlay" (click)="closeAddToCatalogModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Add Product to Catalog</h2>
+        <button class="btn-close" (click)="closeAddToCatalogModal()">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedCraftsmanProduct">
+        <div class="product-preview">
+          <img [src]="selectedCraftsmanProduct.imageUrl" [alt]="selectedCraftsmanProduct.name">
+          <div class="product-info">
+            <h3>{{ selectedCraftsmanProduct.name }}</h3>
+            <p>{{ selectedCraftsmanProduct.description }}</p>
+            <p><strong>Wholesale Price:</strong> Rs. {{ selectedCraftsmanProduct.wholesalePrice.toLocaleString() }}</p>
+          </div>
+        </div>
+
+        <form class="catalog-form">
+          <div class="form-group">
+            <label for="retailPrice">Set Retail Price (Rs.) <span class="required">*</span></label>
+            <input 
+              type="number" 
+              id="retailPrice" 
+              [(ngModel)]="addToCatalogForm.retailPrice"
+              name="retailPrice"
+              min="0"
+              required>
+            <small class="form-hint">Suggested: Rs. {{ Math.round(selectedCraftsmanProduct.wholesalePrice * 1.3).toLocaleString() }} (30% markup)</small>
+          </div>
+
+          <div class="form-group">
+            <label for="initialStock">Initial Stock Quantity <span class="required">*</span></label>
+            <input 
+              type="number" 
+              id="initialStock" 
+              [(ngModel)]="addToCatalogForm.stock"
+              name="initialStock"
+              min="0"
+              required>
+          </div>
+        </form>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="closeAddToCatalogModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn-save" (click)="addToCatalog()">
+          Add to Catalog
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Catalog Product Modal -->
+  <div *ngIf="showEditCatalogModal" class="modal-overlay" (click)="closeEditCatalogModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Edit Catalog Product</h2>
+        <button class="btn-close" (click)="closeEditCatalogModal()">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="editingCatalogProduct">
+        <h3>{{ editingCatalogProduct.name }}</h3>
+        
+        <form class="catalog-form">
+          <div class="form-group">
+            <label for="editRetailPrice">Retail Price (Rs.) <span class="required">*</span></label>
+            <input 
+              type="number" 
+              id="editRetailPrice" 
+              [(ngModel)]="catalogEditForm.retailPrice"
+              name="editRetailPrice"
+              min="0"
+              required>
+            <small class="form-hint">Wholesale: Rs. {{ editingCatalogProduct.wholesalePrice.toLocaleString() }}</small>
+          </div>
+
+          <div class="form-group">
+            <label for="editStock">Stock Quantity <span class="required">*</span></label>
+            <input 
+              type="number" 
+              id="editStock" 
+              [(ngModel)]="catalogEditForm.stock"
+              name="editStock"
+              min="0"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="editCategory">Category</label>
+            <select 
+              id="editCategory" 
+              [(ngModel)]="catalogEditForm.category"
+              name="editCategory">
+              <option value="">Select Category</option>
+              <option *ngFor="let cat of categories" [value]="cat.slug">
+                {{ cat.name }}
+              </option>
+            </select>
+          </div>
+        </form>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="closeEditCatalogModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn-save" (click)="updateCatalogProduct()">
+          Update Product
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Order Request Modal -->
+  <div *ngIf="showBulkOrderModal" class="modal-overlay" (click)="closeBulkOrderModal()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Request Bulk Order</h2>
+        <button class="btn-close" (click)="closeBulkOrderModal()">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="selectedProductForBulkOrder">
+        <div class="bulk-order-product-info">
+          <img [src]="selectedProductForBulkOrder.imageUrl" [alt]="selectedProductForBulkOrder.name" class="bulk-order-image">
+          <div class="bulk-order-details">
+            <h3>{{ selectedProductForBulkOrder.name }}</h3>
+            <p class="product-material">{{ selectedProductForBulkOrder.material }}</p>
+            <p class="product-wholesale">Wholesale Price: Rs. {{ selectedProductForBulkOrder.wholesalePrice.toLocaleString() }}/unit</p>
+          </div>
+        </div>
+
+        <form class="bulk-order-form">
+          <div class="form-group">
+            <label for="bulkQuantity">Order Quantity <span class="required">*</span></label>
+            <input 
+              type="number" 
+              id="bulkQuantity" 
+              [(ngModel)]="bulkOrderForm.quantity"
+              name="bulkQuantity"
+              min="1"
+              placeholder="Enter quantity"
+              required>
+          </div>
+
+          <div class="form-group">
+            <label for="bulkNotes">Special Instructions (Optional)</label>
+            <textarea 
+              id="bulkNotes" 
+              [(ngModel)]="bulkOrderForm.notes"
+              name="bulkNotes"
+              rows="3"
+              placeholder="Any special requirements or delivery instructions..."></textarea>
+          </div>
+
+          <div class="order-summary">
+            <div class="summary-row">
+              <span>Quantity:</span>
+              <strong>{{ bulkOrderForm.quantity || 0 }} units</strong>
+            </div>
+            <div class="summary-row">
+              <span>Unit Price:</span>
+              <strong>Rs. {{ selectedProductForBulkOrder.wholesalePrice.toLocaleString() }}</strong>
+            </div>
+            <div class="summary-row total">
+              <span>Total Amount:</span>
+              <strong>Rs. {{ calculateBulkOrderTotal() }}</strong>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="closeBulkOrderModal()">
+          Cancel
+        </button>
+        <button type="button" class="btn-save" (click)="submitBulkOrder()">
+          Submit Order Request
+        </button>
+      </div>
+    </div>
   </div>
 </div>

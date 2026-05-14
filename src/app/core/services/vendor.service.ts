@@ -47,10 +47,47 @@ export interface Craftsman {
   productsCount: number;
 }
 
+export interface CraftsmanProduct {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  subcategory?: string;
+  wholesalePrice: number;
+  material?: string;
+  dimensions?: string;
+  weight?: string;
+  imageUrl: string;
+  craftsmanId: string;
+  craftsmanName: string;
+  isSelectedByVendor: boolean;
+}
+
+export interface VendorCatalogProduct {
+  id: string;
+  craftsmanProductId: string;
+  name: string;
+  description: string;
+  category: string;
+  subcategory?: string;
+  wholesalePrice: number;
+  retailPrice: number;
+  material?: string;
+  dimensions?: string;
+  weight?: string;
+  imageUrl: string;
+  craftsmanId: string;
+  craftsmanName: string;
+  stock: number;
+  isPublished: boolean;
+}
+
 export interface DashboardStats {
+  totalProducts: number;
+  productsLowInStock: number;
   totalOrders: number;
-  totalInventoryItems: number;
-  totalCraftsmen: number;
+  pendingOrders: number;
+  totalCraftsmenConnected: number;
   monthlySales: number;
 }
 
@@ -176,6 +213,254 @@ export class VendorService {
     }
   ];
 
+  // Mock craftsmen products catalog
+  private craftsmenProducts: CraftsmanProduct[] = [
+    {
+      id: 'cp-1',
+      name: 'Handcrafted Teak Sofa',
+      description: 'Premium 3-seater sofa made from solid teak wood',
+      category: 'living-room',
+      subcategory: 'sofas',
+      wholesalePrice: 35000,
+      material: 'Teak Wood',
+      dimensions: '200cm x 90cm x 85cm',
+      weight: '65kg',
+      imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500',
+      craftsmanId: 'craft-1',
+      craftsmanName: 'John Carpenter',
+      isSelectedByVendor: true
+    },
+    {
+      id: 'cp-2',
+      name: 'Mahogany Dining Table',
+      description: 'Elegant 6-seater dining table with smooth finish',
+      category: 'dining-room',
+      subcategory: 'tables',
+      wholesalePrice: 22000,
+      material: 'Mahogany',
+      dimensions: '180cm x 90cm x 75cm',
+      weight: '45kg',
+      imageUrl: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=500',
+      craftsmanId: 'craft-1',
+      craftsmanName: 'John Carpenter',
+      isSelectedByVendor: true
+    },
+    {
+      id: 'cp-3',
+      name: 'King Size Oak Bed',
+      description: 'Luxury bed frame with headboard storage',
+      category: 'bedroom',
+      subcategory: 'beds',
+      wholesalePrice: 28000,
+      material: 'Oak Wood',
+      dimensions: '200cm x 180cm x 120cm',
+      weight: '80kg',
+      imageUrl: 'https://images.unsplash.com/photo-1505693314120-0d443867891c?w=500',
+      craftsmanId: 'craft-2',
+      craftsmanName: 'Robert Wood',
+      isSelectedByVendor: true
+    },
+    {
+      id: 'cp-4',
+      name: 'Walnut Wardrobe',
+      description: '4-door wardrobe with mirror and drawers',
+      category: 'bedroom',
+      subcategory: 'wardrobes',
+      wholesalePrice: 32000,
+      material: 'Walnut',
+      dimensions: '240cm x 60cm x 220cm',
+      weight: '95kg',
+      imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500',
+      craftsmanId: 'craft-2',
+      craftsmanName: 'Robert Wood',
+      isSelectedByVendor: false
+    },
+    {
+      id: 'cp-5',
+      name: 'Executive Office Desk',
+      description: 'Professional desk with drawers and cable management',
+      category: 'office',
+      subcategory: 'desks',
+      wholesalePrice: 25000,
+      material: 'Engineered Wood',
+      dimensions: '160cm x 80cm x 75cm',
+      weight: '55kg',
+      imageUrl: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=500',
+      craftsmanId: 'craft-3',
+      craftsmanName: 'Michael Oak',
+      isSelectedByVendor: true
+    },
+    {
+      id: 'cp-6',
+      name: 'Ergonomic Office Chair',
+      description: 'Comfortable chair with lumbar support',
+      category: 'office',
+      subcategory: 'chairs',
+      wholesalePrice: 8000,
+      material: 'Mesh & Steel',
+      dimensions: '60cm x 60cm x 110cm',
+      weight: '15kg',
+      imageUrl: 'https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=500',
+      craftsmanId: 'craft-3',
+      craftsmanName: 'Michael Oak',
+      isSelectedByVendor: false
+    },
+    {
+      id: 'cp-7',
+      name: 'Kids Study Table',
+      description: 'Colorful study table with adjustable height',
+      category: 'kids',
+      subcategory: 'tables',
+      wholesalePrice: 9000,
+      material: 'Pine Wood',
+      dimensions: '90cm x 60cm x 70cm',
+      weight: '12kg',
+      imageUrl: 'https://images.unsplash.com/photo-1542744095-291d1f67b221?w=500',
+      craftsmanId: 'craft-3',
+      craftsmanName: 'Michael Oak',
+      isSelectedByVendor: false
+    },
+    {
+      id: 'cp-8',
+      name: 'Garden Bench',
+      description: 'Weather-resistant outdoor bench',
+      category: 'outdoor',
+      subcategory: 'seating',
+      wholesalePrice: 12000,
+      material: 'Treated Pine',
+      dimensions: '150cm x 55cm x 85cm',
+      weight: '28kg',
+      imageUrl: 'https://images.unsplash.com/photo-1533090161767-e6ffed986c88?w=500',
+      craftsmanId: 'craft-4',
+      craftsmanName: 'David Teak',
+      isSelectedByVendor: false
+    },
+    {
+      id: 'cp-9',
+      name: 'Coffee Table Set',
+      description: 'Modern coffee table with 2 side tables',
+      category: 'living-room',
+      subcategory: 'tables',
+      wholesalePrice: 15000,
+      material: 'Teak Wood',
+      dimensions: '120cm x 60cm x 45cm',
+      weight: '35kg',
+      imageUrl: 'https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=500',
+      craftsmanId: 'craft-1',
+      craftsmanName: 'John Carpenter',
+      isSelectedByVendor: false
+    },
+    {
+      id: 'cp-10',
+      name: 'Bedside Table Pair',
+      description: 'Set of 2 matching bedside tables with drawers',
+      category: 'bedroom',
+      subcategory: 'tables',
+      wholesalePrice: 6000,
+      material: 'Oak Wood',
+      dimensions: '45cm x 40cm x 55cm',
+      weight: '8kg each',
+      imageUrl: 'https://images.unsplash.com/photo-1565183928294-7d22a3abb60e?w=500',
+      craftsmanId: 'craft-2',
+      craftsmanName: 'Robert Wood',
+      isSelectedByVendor: false
+    }
+  ];
+
+  // Mock vendor catalog products (selected from craftsmen)
+  private vendorCatalog: VendorCatalogProduct[] = [
+    {
+      id: 'vc-1',
+      craftsmanProductId: 'cp-1',
+      name: 'Handcrafted Teak Sofa',
+      description: 'Premium 3-seater sofa made from solid teak wood',
+      category: 'living-room',
+      subcategory: 'sofas',
+      wholesalePrice: 35000,
+      retailPrice: 45000,
+      material: 'Teak Wood',
+      dimensions: '200cm x 90cm x 85cm',
+      weight: '65kg',
+      imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500',
+      craftsmanId: 'craft-1',
+      craftsmanName: 'John Carpenter',
+      stock: 5,
+      isPublished: true
+    },
+    {
+      id: 'vc-2',
+      craftsmanProductId: 'cp-2',
+      name: 'Mahogany Dining Table',
+      description: 'Elegant 6-seater dining table with smooth finish',
+      category: 'dining-room',
+      subcategory: 'tables',
+      wholesalePrice: 22000,
+      retailPrice: 28000,
+      material: 'Mahogany',
+      dimensions: '180cm x 90cm x 75cm',
+      weight: '45kg',
+      imageUrl: 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=500',
+      craftsmanId: 'craft-1',
+      craftsmanName: 'John Carpenter',
+      stock: 3,
+      isPublished: true
+    },
+    {
+      id: 'vc-3',
+      craftsmanProductId: 'cp-3',
+      name: 'King Size Oak Bed',
+      description: 'Luxury bed frame with headboard storage',
+      category: 'bedroom',
+      subcategory: 'beds',
+      wholesalePrice: 28000,
+      retailPrice: 35000,
+      material: 'Oak Wood',
+      dimensions: '200cm x 180cm x 120cm',
+      weight: '80kg',
+      imageUrl: 'https://images.unsplash.com/photo-1505693314120-0d443867891c?w=500',
+      craftsmanId: 'craft-2',
+      craftsmanName: 'Robert Wood',
+      stock: 8,
+      isPublished: true
+    },
+    {
+      id: 'vc-4',
+      craftsmanProductId: 'cp-5',
+      name: 'Executive Office Desk',
+      description: 'Professional desk with drawers and cable management',
+      category: 'office',
+      subcategory: 'desks',
+      wholesalePrice: 25000,
+      retailPrice: 32000,
+      material: 'Engineered Wood',
+      dimensions: '160cm x 80cm x 75cm',
+      weight: '55kg',
+      imageUrl: 'https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?w=500',
+      craftsmanId: 'craft-3',
+      craftsmanName: 'Michael Oak',
+      stock: 12,
+      isPublished: true
+    },
+    {
+      id: 'vc-5',
+      craftsmanProductId: 'cp-1',
+      name: 'Handcrafted Teak Sofa - Special Edition',
+      description: 'Premium 3-seater sofa with custom cushions',
+      category: 'living-room',
+      subcategory: 'sofas',
+      wholesalePrice: 35000,
+      retailPrice: 48000,
+      material: 'Teak Wood',
+      dimensions: '200cm x 90cm x 85cm',
+      weight: '65kg',
+      imageUrl: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500',
+      craftsmanId: 'craft-1',
+      craftsmanName: 'John Carpenter',
+      stock: 2,
+      isPublished: false
+    }
+  ];
+
   // Mock craftsmen data
   private craftsmen: Craftsman[] = [
     {
@@ -269,12 +554,100 @@ export class VendorService {
 
   // Get dashboard statistics
   getDashboardStats(): Observable<DashboardStats> {
+    const publishedProducts = this.vendorCatalog.filter(p => p.isPublished).length;
+    const lowStockProducts = this.vendorCatalog.filter(p => p.stock < 5).length;
+    const pendingOrders = this.customerOrders.filter(o => o.status === OrderStatus.PENDING).length;
+    
     const stats: DashboardStats = {
+      totalProducts: publishedProducts,
+      productsLowInStock: lowStockProducts,
       totalOrders: this.customerOrders.length,
-      totalInventoryItems: this.inventoryItems.length,
-      totalCraftsmen: this.craftsmen.length,
+      pendingOrders: pendingOrders,
+      totalCraftsmenConnected: this.craftsmen.length,
       monthlySales: this.customerOrders.reduce((sum, order) => sum + order.totalAmount, 0)
     };
     return of(stats).pipe(delay(300));
+  }
+
+  // Get craftsmen products catalog
+  getCraftsmenProducts(craftsmanId?: string): Observable<CraftsmanProduct[]> {
+    if (craftsmanId) {
+      return of(this.craftsmenProducts.filter(p => p.craftsmanId === craftsmanId)).pipe(delay(300));
+    }
+    return of(this.craftsmenProducts).pipe(delay(300));
+  }
+
+  // Get vendor catalog products
+  getVendorCatalog(): Observable<VendorCatalogProduct[]> {
+    return of(this.vendorCatalog).pipe(delay(300));
+  }
+
+  // Add product from craftsman to vendor catalog
+  addToVendorCatalog(craftsmanProductId: string, retailPrice: number, stock: number): Observable<VendorCatalogProduct | null> {
+    const craftsmanProduct = this.craftsmenProducts.find(p => p.id === craftsmanProductId);
+    if (!craftsmanProduct) {
+      return of(null).pipe(delay(300));
+    }
+
+    // Mark as selected
+    craftsmanProduct.isSelectedByVendor = true;
+
+    const newProduct: VendorCatalogProduct = {
+      id: 'vc-' + (this.vendorCatalog.length + 1),
+      craftsmanProductId: craftsmanProduct.id,
+      name: craftsmanProduct.name,
+      description: craftsmanProduct.description,
+      category: craftsmanProduct.category,
+      subcategory: craftsmanProduct.subcategory,
+      wholesalePrice: craftsmanProduct.wholesalePrice,
+      retailPrice: retailPrice,
+      material: craftsmanProduct.material,
+      dimensions: craftsmanProduct.dimensions,
+      weight: craftsmanProduct.weight,
+      imageUrl: craftsmanProduct.imageUrl,
+      craftsmanId: craftsmanProduct.craftsmanId,
+      craftsmanName: craftsmanProduct.craftsmanName,
+      stock: stock,
+      isPublished: false
+    };
+
+    this.vendorCatalog.push(newProduct);
+    return of(newProduct).pipe(delay(300));
+  }
+
+  // Update vendor catalog product
+  updateVendorCatalogProduct(productId: string, updates: Partial<VendorCatalogProduct>): Observable<boolean> {
+    const product = this.vendorCatalog.find(p => p.id === productId);
+    if (product) {
+      Object.assign(product, updates);
+      return of(true).pipe(delay(300));
+    }
+    return of(false).pipe(delay(300));
+  }
+
+  // Publish/Unpublish product
+  togglePublishProduct(productId: string): Observable<boolean> {
+    const product = this.vendorCatalog.find(p => p.id === productId);
+    if (product) {
+      product.isPublished = !product.isPublished;
+      return of(true).pipe(delay(300));
+    }
+    return of(false).pipe(delay(300));
+  }
+
+  // Remove from vendor catalog
+  removeFromVendorCatalog(productId: string): Observable<boolean> {
+    const index = this.vendorCatalog.findIndex(p => p.id === productId);
+    if (index !== -1) {
+      const product = this.vendorCatalog[index];
+      // Unmark as selected
+      const craftsmanProduct = this.craftsmenProducts.find(p => p.id === product.craftsmanProductId);
+      if (craftsmanProduct) {
+        craftsmanProduct.isSelectedByVendor = false;
+      }
+      this.vendorCatalog.splice(index, 1);
+      return of(true).pipe(delay(300));
+    }
+    return of(false).pipe(delay(300));
   }
 }

@@ -3,7 +3,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProductService } from '../../core/services/product.service';
 import { CategoryService, Category, SubCategory } from '../../core/services/category.service';
 import { Product } from '../../core/models/product.model';
-import { VendorService, DashboardStats, CustomerOrder, InventoryItem, Craftsman, OrderStatus } from '../../core/services/vendor.service';
+import { VendorService, DashboardStats, CustomerOrder, InventoryItem, Craftsman, OrderStatus, CraftsmanProduct, VendorCatalogProduct } from '../../core/services/vendor.service';
 
 @Component({
   selector: 'app-vendor-dashboard',
@@ -11,11 +11,14 @@ import { VendorService, DashboardStats, CustomerOrder, InventoryItem, Craftsman,
   styleUrls: ['./vendor-dashboard.component.css']
 })
 export class VendorDashboardComponent implements OnInit {
-  activeTab: 'overview' | 'orders' | 'inventory' | 'craftsmen' | 'products' = 'overview';
+  activeTab: 'overview' | 'orders' | 'inventory' | 'craftsmen' | 'products' | 'catalog' = 'overview';
+  Math = Math; // For use in template
   stats: DashboardStats = {
+    totalProducts: 0,
+    productsLowInStock: 0,
     totalOrders: 0,
-    totalInventoryItems: 0,
-    totalCraftsmen: 0,
+    pendingOrders: 0,
+    totalCraftsmenConnected: 0,
     monthlySales: 0
   };
 
@@ -32,6 +35,33 @@ export class VendorDashboardComponent implements OnInit {
 
   // Craftsmen data
   craftsmen: Craftsman[] = [];
+  selectedCraftsmanId: string | null = null;
+  craftsmenProducts: CraftsmanProduct[] = [];
+  showAddToCatalogModal = false;
+  selectedCraftsmanProduct: CraftsmanProduct | null = null;
+  addToCatalogForm = {
+    retailPrice: 0,
+    stock: 0
+  };
+
+  // Vendor Catalog data
+  vendorCatalog: VendorCatalogProduct[] = [];
+  showEditCatalogModal = false;
+  editingCatalogProduct: VendorCatalogProduct | null = null;
+  catalogEditForm = {
+    retailPrice: 0,
+    stock: 0,
+    category: '',
+    subcategory: ''
+  };
+
+  // Bulk Order data
+  showBulkOrderModal = false;
+  selectedProductForBulkOrder: CraftsmanProduct | null = null;
+  bulkOrderForm = {
+    quantity: 1,
+    notes: ''
+  };
 
   // Products data
   vendorProducts: Product[] = [];
@@ -91,6 +121,16 @@ export class VendorDashboardComponent implements OnInit {
     // Load craftsmen
     this.vendorService.getCraftsmen().subscribe(craftsmen => {
       this.craftsmen = craftsmen;
+    });
+
+    // Load craftsmen products
+    this.vendorService.getCraftsmenProducts().subscribe(products => {
+      this.craftsmenProducts = products;
+    });
+
+    // Load vendor catalog
+    this.vendorService.getVendorCatalog().subscribe(catalog => {
+      this.vendorCatalog = catalog;
       this.loading = false;
     });
   }
@@ -108,7 +148,7 @@ export class VendorDashboardComponent implements OnInit {
     }
   }
 
-  switchTab(tab: 'overview' | 'orders' | 'inventory' | 'craftsmen' | 'products'): void {
+  switchTab(tab: 'overview' | 'orders' | 'inventory' | 'craftsmen' | 'products' | 'catalog'): void {
     this.activeTab = tab;
   }
 
@@ -302,6 +342,187 @@ export class VendorDashboardComponent implements OnInit {
 
   getProductStatusClass(product: Product): string {
     return product.stock > 0 ? 'status-active' : 'status-out-of-stock';
+  }
+
+  // Craftsmen Products Management
+  viewCraftsmanProducts(craftsmanId: string): void {
+    this.selectedCraftsmanId = craftsmanId;
+  }
+
+  getCraftsmanProducts(craftsmanId: string): CraftsmanProduct[] {
+    return this.craftsmenProducts.filter(p => p.craftsmanId === craftsmanId);
+  }
+
+  openAddToCatalogModal(product: CraftsmanProduct): void {
+    this.selectedCraftsmanProduct = product;
+    this.addToCatalogForm = {
+      retailPrice: Math.round(product.wholesalePrice * 1.3),
+      stock: 10
+    };
+    this.showAddToCatalogModal = true;
+  }
+
+  closeAddToCatalogModal(): void {
+    this.showAddToCatalogModal = false;
+    this.selectedCraftsmanProduct = null;
+  }
+
+  addToCatalog(): void {
+    if (this.selectedCraftsmanProduct && this.addToCatalogForm.retailPrice > 0 && this.addToCatalogForm.stock >= 0) {
+      this.vendorService.addToVendorCatalog(
+        this.selectedCraftsmanProduct.id,
+        this.addToCatalogForm.retailPrice,
+        this.addToCatalogForm.stock
+      ).subscribe(product => {
+        if (product) {
+          this.loadDashboardData();
+          this.closeAddToCatalogModal();
+          alert('Product added to your catalog successfully!');
+        }
+      });
+    }
+  }
+
+  // Vendor Catalog Management
+  openEditCatalogModal(product: VendorCatalogProduct): void {
+    this.editingCatalogProduct = product;
+    this.catalogEditForm = {
+      retailPrice: product.retailPrice,
+      stock: product.stock,
+      category: product.category,
+      subcategory: product.subcategory || ''
+    };
+    this.showEditCatalogModal = true;
+  }
+
+  closeEditCatalogModal(): void {
+    this.showEditCatalogModal = false;
+    this.editingCatalogProduct = null;
+  }
+
+  updateCatalogProduct(): void {
+    if (this.editingCatalogProduct) {
+      this.vendorService.updateVendorCatalogProduct(this.editingCatalogProduct.id, {
+        retailPrice: this.catalogEditForm.retailPrice,
+        stock: this.catalogEditForm.stock,
+        category: this.catalogEditForm.category,
+        subcategory: this.catalogEditForm.subcategory
+      }).subscribe(success => {
+        if (success) {
+          this.loadDashboardData();
+          this.closeEditCatalogModal();
+          alert('Product updated successfully!');
+        }
+      });
+    }
+  }
+
+  togglePublish(productId: string): void {
+    this.vendorService.togglePublishProduct(productId).subscribe(success => {
+      if (success) {
+        this.loadDashboardData();
+      }
+    });
+  }
+
+  removeFromCatalog(productId: string): void {
+    if (confirm('Are you sure you want to remove this product from your catalog?')) {
+      this.vendorService.removeFromVendorCatalog(productId).subscribe(success => {
+        if (success) {
+          this.loadDashboardData();
+          alert('Product removed from catalog!');
+        }
+      });
+    }
+  }
+
+  getCatalogStatusClass(product: VendorCatalogProduct): string {
+    if (!product.isPublished) return 'status-unpublished';
+    if (product.stock === 0) return 'status-out-of-stock';
+    if (product.stock < 5) return 'status-low-stock';
+    return 'status-active';
+  }
+
+  getCatalogStatus(product: VendorCatalogProduct): string {
+    if (!product.isPublished) return 'Unpublished';
+    if (product.stock === 0) return 'Out of Stock';
+    if (product.stock < 5) return 'Low Stock';
+    return 'Active';
+  }
+
+  getStockStatusClass(stock: number): string {
+    if (stock === 0) return 'stock-out';
+    if (stock < 5) return 'stock-low';
+    return 'stock-ok';
+  }
+
+  getStockStatus(stock: number): string {
+    if (stock === 0) return 'Out of Stock';
+    if (stock < 5) return 'Low Stock';
+    return 'Active';
+  }
+
+  requestBulkOrder(item: any): void {
+    // Navigate to craftsmen tab and pre-select the craftsman
+    this.activeTab = 'craftsmen';
+    // Find and select the craftsman for this product
+    const craftsman = this.craftsmen.find(c => c.name === item.craftsmanName);
+    if (craftsman) {
+      this.selectedCraftsmanId = craftsman.id;
+    }
+    // Scroll to top smoothly
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // Bulk Order Modal methods
+  openBulkOrderModal(product: CraftsmanProduct): void {
+    this.selectedProductForBulkOrder = product;
+    this.bulkOrderForm = {
+      quantity: 1,
+      notes: ''
+    };
+    this.showBulkOrderModal = true;
+  }
+
+  closeBulkOrderModal(): void {
+    this.showBulkOrderModal = false;
+    this.selectedProductForBulkOrder = null;
+    this.bulkOrderForm = {
+      quantity: 1,
+      notes: ''
+    };
+  }
+
+  calculateBulkOrderTotal(): string {
+    if (!this.selectedProductForBulkOrder || !this.bulkOrderForm.quantity) {
+      return '0';
+    }
+    const total = this.selectedProductForBulkOrder.wholesalePrice * this.bulkOrderForm.quantity;
+    return total.toLocaleString();
+  }
+
+  submitBulkOrder(): void {
+    if (!this.selectedProductForBulkOrder || this.bulkOrderForm.quantity < 1) {
+      alert('Please enter a valid quantity');
+      return;
+    }
+
+    // In a real app, this would send the order to the backend
+    const orderDetails = {
+      productId: this.selectedProductForBulkOrder.id,
+      productName: this.selectedProductForBulkOrder.name,
+      craftsmanId: this.selectedProductForBulkOrder.craftsmanId,
+      quantity: this.bulkOrderForm.quantity,
+      wholesalePrice: this.selectedProductForBulkOrder.wholesalePrice,
+      totalAmount: this.selectedProductForBulkOrder.wholesalePrice * this.bulkOrderForm.quantity,
+      notes: this.bulkOrderForm.notes,
+      orderDate: new Date()
+    };
+
+    console.log('Bulk Order Request:', orderDetails);
+    alert(`Bulk order request submitted!\n\nProduct: ${orderDetails.productName}\nQuantity: ${orderDetails.quantity} units\nTotal: Rs. ${orderDetails.totalAmount.toLocaleString()}\n\nThe craftsman will be notified of your order.`);
+    
+    this.closeBulkOrderModal();
   }
 
   logout(): void {

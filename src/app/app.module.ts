@@ -6,6 +6,9 @@ import { AppRoutingModule } from './app-routing.module';
 // Core
 import { AppComponent } from './app.component';
 
+// Services
+import { CraftsmanService } from './core/services/craftsman.service';
+
 // Shared Components
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { FooterComponent } from './shared/footer/footer.component';
@@ -61,7 +64,7 @@ import { CustomerDashboardComponent } from './customer/customer-dashboard/custom
     FormsModule,
     AppRoutingModule
   ],
-  providers: [],
+  providers: [CraftsmanService],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

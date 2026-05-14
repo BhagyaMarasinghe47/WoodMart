@@ -1,7 +1,6 @@
 <div class="dashboard-container">
   <div class="dashboard-header">
     <h1>Customer Dashboard</h1>
-    <button class="btn-logout" (click)="logout()">Logout</button>
   </div>
 
   <div class="quick-actions">
@@ -29,7 +28,7 @@
         </div>
         <div class="order-details">
           <p><strong>Date:</strong> {{ order.createdAt | date }}</p>
-          <p><strong>Total:</strong> ${{ order.totalAmount.toFixed(2) }}</p>
+          <p><strong>Total:</strong> Rs. {{ order.totalAmount.toLocaleString() }}</p>
         </div>
         
         <!-- Order Items with Images -->
@@ -40,8 +39,8 @@
               <img [src]="item.productImage" [alt]="item.productName" class="item-image">
               <div class="item-details">
                 <p class="item-name">{{ item.productName }}</p>
-                <p class="item-info">Qty: {{ item.quantity }} × ${{ item.price.toFixed(2) }}</p>
-                <p class="item-subtotal">${{ item.subtotal.toFixed(2) }}</p>
+                <p class="item-info">Qty: {{ item.quantity }} × Rs. {{ item.price.toLocaleString() }}</p>
+                <p class="item-subtotal">Rs. {{ item.subtotal.toLocaleString() }}</p>
               </div>
             </div>
           </div>

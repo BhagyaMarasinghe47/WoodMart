@@ -8,10 +8,34 @@
 
     <!-- Main Navigation Menu -->
     <div class="navbar-menu">
-      <!-- PUBLIC LINKS - Always visible to everyone -->
-      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
-      <a routerLink="/products" routerLinkActive="active">Products</a>
-      <a routerLink="/shops" routerLinkActive="active">Shops</a>
+      <!-- HOME LINK - Only for guests and customers -->
+      @if (isGuest() || isCustomer()) {
+        <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
+      }
+      
+      <!-- VENDOR DASHBOARD - Before Products -->
+      @if (isVendor()) {
+        <a routerLink="/vendor/dashboard" routerLinkActive="active" class="dashboard-link">
+          Vendor Dashboard
+        </a>
+      }
+      
+      <!-- CRAFTSMAN DASHBOARD - Before Products -->
+      @if (isCraftsman()) {
+        <a routerLink="/craftsman/dashboard" routerLinkActive="active" class="dashboard-link">
+          Craftsman Dashboard
+        </a>
+      }
+      
+      <!-- PRODUCTS LINK - Visible to guests, customers, vendors, and admin (NOT craftsmen) -->
+      @if (isGuest() || isCustomer() || isVendor() || isAdmin()) {
+        <a routerLink="/products" routerLinkActive="active">Products</a>
+      }
+      
+      <!-- SHOPS LINK - Visible to guests, customers, and admin (NOT vendors or craftsmen) -->
+      @if (isGuest() || isCustomer() || isAdmin()) {
+        <a routerLink="/shops" routerLinkActive="active">Shops</a>
+      }
 
       <!-- GUEST USER - Not logged in -->
       @if (isGuest()) {
@@ -49,7 +73,6 @@
           </button>
           @if (showProfileDropdown) {
             <div class="profile-dropdown">
-              <button (click)="navigateToDashboard()">Dashboard</button>
               <button (click)="logout()">Logout</button>
             </div>
           }
@@ -58,11 +81,6 @@
 
       <!-- VENDOR - Logged in as vendor -->
       @if (isVendor()) {
-        <!-- Vendor Dashboard link -->
-        <a routerLink="/vendor/dashboard" routerLinkActive="active" class="dashboard-link">
-          Vendor Dashboard
-        </a>
-        
         <!-- Profile dropdown -->
         <div class="profile-menu">
           <button class="profile-button" (click)="toggleProfileDropdown()">
@@ -80,11 +98,6 @@
 
       <!-- CRAFTSMAN - Logged in as craftsman -->
       @if (isCraftsman()) {
-        <!-- Craftsman Dashboard link -->
-        <a routerLink="/craftsman/dashboard" routerLinkActive="active" class="dashboard-link">
-          Craftsman Dashboard
-        </a>
-        
         <!-- Profile dropdown -->
         <div class="profile-menu">
           <button class="profile-button" (click)="toggleProfileDropdown()">
@@ -108,7 +121,7 @@
         </a>
         
         <!-- User Management link -->
-        <a routerLink="/admin/users" routerLinkActive="active" class="dashboard-link">
+        <a routerLink="/admin/user-management" routerLinkActive="active" class="dashboard-link">
           User Management
         </a>
         

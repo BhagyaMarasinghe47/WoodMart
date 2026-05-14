@@ -18,7 +18,7 @@
       <p class="craftsman">Crafted by {{ product.craftsmanName }}</p>
       
       <div class="price-section">
-        <div class="price">${{ product.retailPrice }}</div>
+        <div class="price">Rs. {{ product.retailPrice.toLocaleString() }}</div>
         <div class="stock-info" [class.low-stock]="product.stock < 10" [class.out-of-stock]="product.stock === 0">
           {{ product.stock > 0 ? product.stock + ' in stock' : 'Out of Stock' }}
         </div>

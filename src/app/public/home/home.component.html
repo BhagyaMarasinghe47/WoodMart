@@ -44,7 +44,7 @@
             <div class="product-info">
               <h3 (click)="viewProduct(product.id)">{{ product.name }}</h3>
               <p class="product-description">{{ product.description }}</p>
-              <div class="product-price">${{ product.retailPrice }}</div>
+              <div class="product-price">Rs. {{ product.retailPrice.toLocaleString() }}</div>
               <div class="product-stock" *ngIf="product.stock < 10">Only {{ product.stock }} left!</div>
             </div>
           </div>

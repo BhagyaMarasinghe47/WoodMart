@@ -20,20 +20,6 @@
     </div>
 
     <form (ngSubmit)="onSubmit()" class="login-form">
-      <!-- Role Selector -->
-      <div class="form-group">
-        <label for="role">Select Role</label>
-        <select 
-          id="role" 
-          [(ngModel)]="selectedRole" 
-          name="role"
-          class="role-select">
-          <option value="CUSTOMER">User</option>
-          <option value="VENDOR">Vendor</option>
-          <option value="CRAFTSMAN">Craftsman</option>
-        </select>
-      </div>
-
       <div class="form-group">
         <label for="email">Email Address</label>
         <input 

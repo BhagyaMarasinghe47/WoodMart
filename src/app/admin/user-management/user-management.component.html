@@ -1,0 +1,263 @@
+<div class="user-management-container">
+  <!-- Header -->
+  <div class="header">
+    <h1>User Management</h1>
+    <button class="btn-export" (click)="exportToCSV()">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+      Export Data
+    </button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <div class="search-box">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.35-4.35"></path>
+      </svg>
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (ngModelChange)="onSearchChange()"
+        placeholder="Search by name, email, phone, or shop name...">
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      class="tab" 
+      [class.active]="selectedTab === UserRole.CUSTOMER"
+      (click)="filterByTab(UserRole.CUSTOMER)">
+      Customers ({{ customers.length }})
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="selectedTab === UserRole.VENDOR"
+      (click)="filterByTab(UserRole.VENDOR)">
+      Vendors ({{ vendors.length }})
+    </button>
+    <button 
+      class="tab" 
+      [class.active]="selectedTab === UserRole.CRAFTSMAN"
+      (click)="filterByTab(UserRole.CRAFTSMAN)">
+      Craftsmen ({{ craftsmen.length }})
+    </button>
+  </div>
+
+  <!-- Users Table -->
+  <div class="table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th *ngIf="selectedTab === UserRole.VENDOR">Shop Name</th>
+          <th *ngIf="selectedTab === UserRole.VENDOR">Shop Reg. No.</th>
+          <th *ngIf="selectedTab === UserRole.CRAFTSMAN">Specialization</th>
+          <th *ngIf="selectedTab === UserRole.CRAFTSMAN">Experience</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Joined Date</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers">
+          <td>
+            <div class="user-name">
+              <div class="user-avatar">{{ user.firstName.charAt(0) }}{{ user.lastName.charAt(0) }}</div>
+              <span>{{ user.firstName }} {{ user.lastName }}</span>
+            </div>
+          </td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.phone || 'N/A' }}</td>
+          <td *ngIf="selectedTab === UserRole.VENDOR">{{ user.shopName || 'N/A' }}</td>
+          <td *ngIf="selectedTab === UserRole.VENDOR">{{ user.shopRegNumber || 'N/A' }}</td>
+          <td *ngIf="selectedTab === UserRole.CRAFTSMAN">{{ user.specialization || 'N/A' }}</td>
+          <td *ngIf="selectedTab === UserRole.CRAFTSMAN">{{ user.experience ? user.experience + ' years' : 'N/A' }}</td>
+          <td>{{ user.location || user.city || 'N/A' }}</td>
+          <td>
+            <span class="status-badge" [ngClass]="getStatusClass(user.approvalStatus)">
+              {{ user.approvalStatus }}
+            </span>
+          </td>
+          <td>{{ user.createdAt | date: 'MMM d, yyyy' }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action btn-view" (click)="viewDetails(user)" title="View Details">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+              <button 
+                *ngIf="user.approvalStatus === 'PENDING'" 
+                class="btn-action btn-approve" 
+                (click)="approveUser(user.id)"
+                title="Approve">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </button>
+              <button 
+                *ngIf="user.approvalStatus === 'PENDING'" 
+                class="btn-action btn-reject" 
+                (click)="rejectUser(user.id)"
+                title="Reject">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+              <button class="btn-action btn-delete" (click)="deleteUser(user.id)" title="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="filteredUsers.length === 0">
+          <td [attr.colspan]="selectedTab === UserRole.VENDOR || selectedTab === UserRole.CRAFTSMAN ? 11 : 9" class="no-data">
+            No users found
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Details Modal -->
+  <div class="modal-overlay" *ngIf="showDetailsModal" (click)="closeDetailsModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>User Details</h2>
+        <button class="btn-close-modal" (click)="closeDetailsModal()">✕</button>
+      </div>
+      <div class="modal-body" *ngIf="selectedUser">
+        <div class="detail-section">
+          <h3>Personal Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Full Name:</label>
+              <span>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Email:</label>
+              <span>{{ selectedUser.email }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Phone:</label>
+              <span>{{ selectedUser.phone || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Role:</label>
+              <span class="role-badge">{{ selectedUser.role }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Status:</label>
+              <span class="status-badge" [ngClass]="getStatusClass(selectedUser.approvalStatus)">
+                {{ selectedUser.approvalStatus }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <label>Joined Date:</label>
+              <span>{{ selectedUser.createdAt | date: 'MMMM d, yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <h3>Address Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Address:</label>
+              <span>{{ selectedUser.address || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>City:</label>
+              <span>{{ selectedUser.city || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>District:</label>
+              <span>{{ selectedUser.district || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Postal Code:</label>
+              <span>{{ selectedUser.postalCode || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Location:</label>
+              <span>{{ selectedUser.location || 'N/A' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedUser.role === UserRole.VENDOR">
+          <h3>Business Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Shop Name:</label>
+              <span>{{ selectedUser.shopName || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Shop Registration No.:</label>
+              <span>{{ selectedUser.shopRegNumber || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Business License:</label>
+              <span>{{ selectedUser.businessLicense || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Tax ID:</label>
+              <span>{{ selectedUser.taxId || 'N/A' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section" *ngIf="selectedUser.role === UserRole.CRAFTSMAN">
+          <h3>Professional Information</h3>
+          <div class="detail-grid">
+            <div class="detail-item">
+              <label>Specialization:</label>
+              <span>{{ selectedUser.specialization || 'N/A' }}</span>
+            </div>
+            <div class="detail-item">
+              <label>Experience:</label>
+              <span>{{ selectedUser.experience ? selectedUser.experience + ' years' : 'N/A' }}</span>
+            </div>
+            <div class="detail-item full-width">
+              <label>Certifications:</label>
+              <span *ngIf="selectedUser.certifications && selectedUser.certifications.length > 0">
+                {{ selectedUser.certifications.join(', ') }}
+              </span>
+              <span *ngIf="!selectedUser.certifications || selectedUser.certifications.length === 0">N/A</span>
+            </div>
+            <div class="detail-item full-width">
+              <label>Portfolio:</label>
+              <a *ngIf="selectedUser.portfolio" [href]="selectedUser.portfolio" target="_blank" class="portfolio-link">
+                {{ selectedUser.portfolio }}
+              </a>
+              <span *ngIf="!selectedUser.portfolio">N/A</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-actions" *ngIf="selectedUser.approvalStatus === 'PENDING'">
+          <button class="btn-modal-approve" (click)="approveUser(selectedUser.id); closeDetailsModal()">
+            Approve User
+          </button>
+          <button class="btn-modal-reject" (click)="rejectUser(selectedUser.id); closeDetailsModal()">
+            Reject User
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
