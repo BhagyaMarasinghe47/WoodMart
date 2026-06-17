@@ -8,7 +8,8 @@ import { AuthService } from '../../core/services/auth.service';
   styleUrls: ['./register.component.css']
 })
 export class RegisterComponent {
-  fullName = '';
+  firstName = '';
+  lastName = '';
   email = '';
   contactNumber = '';
   password = '';
@@ -17,9 +18,9 @@ export class RegisterComponent {
   selectedRole: 'CUSTOMER' | 'VENDOR' | 'CRAFTSMAN' = 'CUSTOMER';
   
   // Vendor-specific fields
-  pharmacyName = '';
-  pharmacyRegistrationNumber = '';
-  pharmacyAddress = '';
+  shopName = '';
+  businessRegistrationNumber = '';
+  shopAddress = '';
   deliveryAvailable = false;
   
   errorMessage = '';
@@ -39,15 +40,15 @@ export class RegisterComponent {
     this.successMessage = '';
 
     // Basic validation
-    if (!this.fullName || !this.email || !this.contactNumber || !this.password || !this.confirmPassword) {
+    if (!this.firstName || !this.lastName || !this.email || !this.contactNumber || !this.password || !this.confirmPassword) {
       this.errorMessage = 'All required fields must be filled';
       return;
     }
 
     // Vendor-specific validation
     if (this.selectedRole === 'VENDOR') {
-      if (!this.pharmacyName || !this.pharmacyRegistrationNumber || !this.pharmacyAddress) {
-        this.errorMessage = 'All pharmacy details are required for vendor registration';
+      if (!this.shopName || !this.businessRegistrationNumber || !this.shopAddress) {
+        this.errorMessage = 'All shop details are required for vendor registration';
         return;
       }
     }
@@ -57,8 +58,8 @@ export class RegisterComponent {
       return;
     }
 
-    if (this.password.length < 6) {
-      this.errorMessage = 'Password must be at least 6 characters';
+    if (this.password.length < 8) {
+      this.errorMessage = 'Password must be at least 8 characters';
       return;
     }
 
@@ -69,32 +70,29 @@ export class RegisterComponent {
       return;
     }
 
-    // Call register service
-    const result = this.authService.register({
-      fullName: this.fullName,
+    this.authService.register({
+      firstName: this.firstName,
+      lastName: this.lastName,
       email: this.email,
       contactNumber: this.contactNumber,
       password: this.password,
       cityArea: this.cityArea,
-      role: this.selectedRole,
-      // Vendor-specific fields
-      pharmacyName: this.selectedRole === 'VENDOR' ? this.pharmacyName : undefined,
-      pharmacyRegistrationNumber: this.selectedRole === 'VENDOR' ? this.pharmacyRegistrationNumber : undefined,
-      pharmacyAddress: this.selectedRole === 'VENDOR' ? this.pharmacyAddress : undefined,
-      deliveryAvailable: this.selectedRole === 'VENDOR' ? this.deliveryAvailable : undefined
+      role: this.selectedRole
+    }).subscribe({
+      next: (result) => {
+        if (result.success) {
+          this.successMessage = result.message;
+          setTimeout(() => {
+            this.router.navigate(['/login']);
+          }, this.selectedRole === 'CUSTOMER' ? 1500 : 3000);
+        } else {
+          this.errorMessage = result.message;
+        }
+      },
+      error: () => {
+        this.errorMessage = 'Registration failed. Please try again.';
+      }
     });
-
-    if (result.success) {
-      this.successMessage = result.message;
-      
-      // For CUSTOMER role, redirect to login immediately
-      // For VENDOR/CRAFTSMAN, show approval message and redirect after 3 seconds
-      setTimeout(() => {
-        this.router.navigate(['/login']);
-      }, 3000);
-    } else {
-      this.errorMessage = result.message;
-    }
   }
 
   navigateToLogin() {

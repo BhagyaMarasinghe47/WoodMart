@@ -30,8 +30,7 @@
           [checked]="selectedRole === 'CUSTOMER'"
           id="user-role">
         <label for="user-role">
-          <span class="role-icon">👤</span>
-          <span class="role-name">Register as User</span>
+          <span class="role-name">Register as Customer</span>
         </label>
       </div>
 
@@ -46,7 +45,6 @@
           [checked]="selectedRole === 'VENDOR'"
           id="vendor-role">
         <label for="vendor-role">
-          <span class="role-icon">🏪</span>
           <span class="role-name">Register as Vendor</span>
         </label>
       </div>
@@ -62,7 +60,6 @@
           [checked]="selectedRole === 'CRAFTSMAN'"
           id="craftsman-role">
         <label for="craftsman-role">
-          <span class="role-icon">🔨</span>
           <span class="role-name">Register as Craftsman</span>
         </label>
       </div>
@@ -71,7 +68,6 @@
     <!-- Warning for Vendor/Craftsman -->
     @if (selectedRole === 'VENDOR' || selectedRole === 'CRAFTSMAN') {
       <div class="approval-warning">
-        <span class="warning-icon">⚠️</span>
         {{ selectedRole === 'VENDOR' ? 'Vendor' : 'Craftsman' }} registrations are subject to admin approval before becoming visible to users.
       </div>
     }
@@ -80,14 +76,25 @@
     <div class="form-section">
       <h3 class="section-title">Account Details</h3>
 
-      <div class="form-group">
-        <label for="fullName">Full Name *</label>
-        <input 
-          type="text" 
-          id="fullName"
-          [(ngModel)]="fullName"
-          placeholder="Enter your full name"
-          class="form-input">
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">First Name *</label>
+          <input
+            type="text"
+            id="firstName"
+            [(ngModel)]="firstName"
+            placeholder="First name"
+            class="form-input">
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name *</label>
+          <input
+            type="text"
+            id="lastName"
+            [(ngModel)]="lastName"
+            placeholder="Last name"
+            class="form-input">
+        </div>
       </div>
 
       <div class="form-group">
@@ -116,7 +123,7 @@
           type="password" 
           id="password"
           [(ngModel)]="password"
-          placeholder="Create a password"
+          placeholder="Create a password (min. 8 characters)"
           class="form-input">
       </div>
 
@@ -141,45 +148,45 @@
       </div>
     </div>
 
-    <!-- Pharmacy Details (Only for Vendor) -->
+    <!-- Shop Details (Only for Vendor) -->
     @if (selectedRole === 'VENDOR') {
       <div class="form-section">
-        <h3 class="section-title">Pharmacy Details</h3>
+        <h3 class="section-title">Furniture Shop Details</h3>
 
         <div class="form-group">
-          <label for="pharmacyName">Pharmacy Name *</label>
-          <input 
-            type="text" 
-            id="pharmacyName"
-            [(ngModel)]="pharmacyName"
-            placeholder="Enter pharmacy name"
+          <label for="shopName">Shop Name *</label>
+          <input
+            type="text"
+            id="shopName"
+            [(ngModel)]="shopName"
+            placeholder="Enter your shop name"
             class="form-input">
         </div>
 
         <div class="form-group">
-          <label for="pharmacyRegistrationNumber">Pharmacy Registration Number *</label>
-          <input 
-            type="text" 
-            id="pharmacyRegistrationNumber"
-            [(ngModel)]="pharmacyRegistrationNumber"
-            placeholder="Enter registration number"
+          <label for="businessRegistrationNumber">Business Registration Number *</label>
+          <input
+            type="text"
+            id="businessRegistrationNumber"
+            [(ngModel)]="businessRegistrationNumber"
+            placeholder="Enter business registration number"
             class="form-input">
         </div>
 
         <div class="form-group">
-          <label for="pharmacyAddress">Pharmacy Address *</label>
-          <textarea 
-            id="pharmacyAddress"
-            [(ngModel)]="pharmacyAddress"
-            placeholder="Enter complete address"
+          <label for="shopAddress">Shop Address *</label>
+          <textarea
+            id="shopAddress"
+            [(ngModel)]="shopAddress"
+            placeholder="Enter complete shop address"
             class="form-input form-textarea"
             rows="3"></textarea>
         </div>
 
         <div class="form-group checkbox-group">
           <label class="checkbox-label">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               [(ngModel)]="deliveryAvailable"
               class="checkbox-input">
             <span>Delivery Available</span>

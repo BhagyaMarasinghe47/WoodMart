@@ -3,7 +3,10 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProductService } from '../../core/services/product.service';
 import { CategoryService, Category, SubCategory } from '../../core/services/category.service';
 import { Product } from '../../core/models/product.model';
-import { VendorService, DashboardStats, CustomerOrder, InventoryItem, Craftsman, OrderStatus, CraftsmanProduct, VendorCatalogProduct } from '../../core/services/vendor.service';
+import { VendorService, DashboardStats, CustomerOrder, InventoryItem, Craftsman, OrderStatus, CraftsmanProduct, VendorCatalogProduct, VendorBulkOrder } from '../../core/services/vendor.service';
+import { ImageUploadService } from '../../core/services/image-upload.service';
+import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 @Component({
   selector: 'app-vendor-dashboard',
@@ -11,7 +14,7 @@ import { VendorService, DashboardStats, CustomerOrder, InventoryItem, Craftsman,
   styleUrls: ['./vendor-dashboard.component.css']
 })
 export class VendorDashboardComponent implements OnInit {
-  activeTab: 'overview' | 'orders' | 'inventory' | 'craftsmen' | 'products' | 'catalog' = 'overview';
+  activeTab: 'overview' | 'orders' | 'inventory' | 'craftsmen' | 'products' | 'catalog' | 'bulk-orders' = 'overview';
   Math = Math; // For use in template
   stats: DashboardStats = {
     totalProducts: 0,
@@ -37,15 +40,20 @@ export class VendorDashboardComponent implements OnInit {
   craftsmen: Craftsman[] = [];
   selectedCraftsmanId: string | null = null;
   craftsmenProducts: CraftsmanProduct[] = [];
+  craftsmenProductSearch = '';
+  craftsmenCategoryFilter = '';
   showAddToCatalogModal = false;
+  addingToCatalog = false;
   selectedCraftsmanProduct: CraftsmanProduct | null = null;
   addToCatalogForm = {
     retailPrice: 0,
-    stock: 0
+    stock: 10
   };
 
   // Vendor Catalog data
   vendorCatalog: VendorCatalogProduct[] = [];
+  selectedCatalogCategory = '';
+  selectedInventoryCategory = '';
   showEditCatalogModal = false;
   editingCatalogProduct: VendorCatalogProduct | null = null;
   catalogEditForm = {
@@ -56,12 +64,15 @@ export class VendorDashboardComponent implements OnInit {
   };
 
   // Bulk Order data
+  bulkOrders: VendorBulkOrder[] = [];
   showBulkOrderModal = false;
   selectedProductForBulkOrder: CraftsmanProduct | null = null;
   bulkOrderForm = {
     quantity: 1,
-    notes: ''
+    notes: '',
+    agreeUnitPrice: 0
   };
+  bulkOrderSubmitting = false;
 
   // Products data
   vendorProducts: Product[] = [];
@@ -82,8 +93,14 @@ export class VendorDashboardComponent implements OnInit {
     weight: ''
   };
   imagePreview: string = '';
+  imageUploading = false;
+  imageUploadError = '';
   showDeleteConfirm = false;
   productToDelete: string | null = null;
+  dimL: number | null = null;
+  dimW: number | null = null;
+  dimH: number | null = null;
+  weightKg: number | null = null;
 
   loading = false;
 
@@ -91,7 +108,10 @@ export class VendorDashboardComponent implements OnInit {
     private authService: AuthService,
     private vendorService: VendorService,
     private productService: ProductService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private imageUploadService: ImageUploadService,
+    private toast: ToastService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -102,41 +122,27 @@ export class VendorDashboardComponent implements OnInit {
 
   loadDashboardData(): void {
     this.loading = true;
-    
-    // Load dashboard stats
-    this.vendorService.getDashboardStats().subscribe(stats => {
-      this.stats = stats;
-    });
-
-    // Load orders
-    this.vendorService.getCustomerOrders().subscribe(orders => {
-      this.orders = orders;
-    });
-
-    // Load inventory
-    this.vendorService.getInventoryItems().subscribe(items => {
-      this.inventoryItems = items;
-    });
-
-    // Load craftsmen
-    this.vendorService.getCraftsmen().subscribe(craftsmen => {
-      this.craftsmen = craftsmen;
-    });
-
-    // Load craftsmen products
-    this.vendorService.getCraftsmenProducts().subscribe(products => {
-      this.craftsmenProducts = products;
-    });
-
-    // Load vendor catalog
-    this.vendorService.getVendorCatalog().subscribe(catalog => {
-      this.vendorCatalog = catalog;
-      this.loading = false;
+    this.vendorService.loadDashboardBundle().subscribe({
+      next: data => {
+        this.stats = data.stats;
+        this.orders = data.orders;
+        this.inventoryItems = data.inventory;
+        this.craftsmen = data.craftsmen;
+        this.craftsmenProducts = data.craftsmanProducts;
+        this.vendorCatalog = data.catalog;
+        this.bulkOrders = data.bulkOrders;
+        this.loading = false;
+      },
+      error: () => {
+        this.loading = false;
+      }
     });
   }
 
   loadCategories(): void {
-    this.categories = this.categoryService.getAllCategories();
+    this.categoryService.loadCategories().subscribe(categories => {
+      this.categories = categories;
+    });
   }
 
   loadVendorProducts(): void {
@@ -148,7 +154,7 @@ export class VendorDashboardComponent implements OnInit {
     }
   }
 
-  switchTab(tab: 'overview' | 'orders' | 'inventory' | 'craftsmen' | 'products' | 'catalog'): void {
+  switchTab(tab: 'overview' | 'orders' | 'inventory' | 'craftsmen' | 'products' | 'catalog' | 'bulk-orders'): void {
     this.activeTab = tab;
   }
 
@@ -229,6 +235,8 @@ export class VendorDashboardComponent implements OnInit {
       if (category) {
         this.selectedCategory = category;
       }
+      this.parseDimensions(product.dimensions);
+      this.weightKg = product.weight ? (parseFloat(product.weight) || null) : null;
     } else {
       this.resetProductForm();
     }
@@ -255,6 +263,23 @@ export class VendorDashboardComponent implements OnInit {
       weight: ''
     };
     this.imagePreview = '';
+    this.dimL = null;
+    this.dimW = null;
+    this.dimH = null;
+    this.weightKg = null;
+  }
+
+  parseDimensions(dim?: string): void {
+    if (!dim) { this.dimL = null; this.dimW = null; this.dimH = null; return; }
+    const parts = dim.split(/[×x]/i).map(p => parseFloat(p.trim()));
+    this.dimL = isNaN(parts[0]) ? null : parts[0];
+    this.dimW = isNaN(parts[1]) ? null : parts[1];
+    this.dimH = isNaN(parts[2]) ? null : parts[2];
+  }
+
+  composeDimensions(): string {
+    if (this.dimL == null && this.dimW == null && this.dimH == null) return '';
+    return `${this.dimL ?? ''} × ${this.dimW ?? ''} × ${this.dimH ?? ''} cm`.trim();
   }
 
   onCategoryChange(categorySlug: string): void {
@@ -263,9 +288,25 @@ export class VendorDashboardComponent implements OnInit {
     this.productForm.subcategory = '';
   }
 
-  onImageUrlChange(url: string): void {
-    this.productForm.imageUrl = url;
-    this.imagePreview = url;
+  onImageFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    const file = input.files[0];
+    this.imageUploading = true;
+    this.imageUploadError = '';
+
+    this.imageUploadService.uploadImage(file).subscribe({
+      next: (res) => {
+        this.productForm.imageUrl = res.imageUrl;
+        this.imagePreview = `http://localhost:5037/${res.imageUrl}`;
+        this.imageUploading = false;
+      },
+      error: () => {
+        this.imageUploadError = 'Image upload failed. Please try again.';
+        this.imageUploading = false;
+      }
+    });
   }
 
   saveProduct(): void {
@@ -273,21 +314,22 @@ export class VendorDashboardComponent implements OnInit {
     if (!currentUser) return;
 
     if (!this.productForm.name || !this.productForm.category || !this.productForm.retailPrice || !this.productForm.stock) {
-      alert('Please fill in all required fields');
+      this.toast.warning('Please fill in all required fields.');
       return;
     }
 
+    this.productForm.dimensions = this.composeDimensions();
+    this.productForm.weight = this.weightKg != null ? `${this.weightKg} kg` : '';
+
     if (this.editingProduct) {
-      // Update existing product
       this.productService.updateVendorProduct(this.editingProduct.id, this.productForm as Product).subscribe(updated => {
         if (updated) {
           this.loadVendorProducts();
           this.closeProductForm();
-          alert('Product updated successfully!');
+          this.toast.success('Product updated successfully!');
         }
       });
     } else {
-      // Add new product
       const newProduct: Omit<Product, 'id'> = {
         name: this.productForm.name!,
         description: this.productForm.description || '',
@@ -309,7 +351,7 @@ export class VendorDashboardComponent implements OnInit {
       this.productService.addVendorProduct(newProduct).subscribe(product => {
         this.loadVendorProducts();
         this.closeProductForm();
-        alert('Product added successfully!');
+        this.toast.success('Product added successfully!');
       });
     }
   }
@@ -330,7 +372,7 @@ export class VendorDashboardComponent implements OnInit {
         if (success) {
           this.loadVendorProducts();
           this.cancelDelete();
-          alert('Product deleted successfully!');
+          this.toast.success('Product deleted successfully!');
         }
       });
     }
@@ -347,10 +389,29 @@ export class VendorDashboardComponent implements OnInit {
   // Craftsmen Products Management
   viewCraftsmanProducts(craftsmanId: string): void {
     this.selectedCraftsmanId = craftsmanId;
+    this.craftsmenProductSearch = '';
+    this.craftsmenCategoryFilter = '';
+    this.vendorService.getCraftsmenProducts(craftsmanId).subscribe(products => {
+      this.craftsmenProducts = products;
+    });
   }
 
-  getCraftsmanProducts(craftsmanId: string): CraftsmanProduct[] {
-    return this.craftsmenProducts.filter(p => p.craftsmanId === craftsmanId);
+  get filteredCraftsmanProducts(): CraftsmanProduct[] {
+    const search = this.craftsmenProductSearch.toLowerCase().trim();
+    const cat = this.craftsmenCategoryFilter;
+    return this.craftsmenProducts.filter(p => {
+      const matchSearch = !search || p.name.toLowerCase().includes(search) || p.description.toLowerCase().includes(search);
+      const matchCat = !cat || p.category === cat;
+      return matchSearch && matchCat;
+    });
+  }
+
+  get craftsmanProductCategories(): string[] {
+    return [...new Set(this.craftsmenProducts.map(p => p.category).filter(Boolean))].sort();
+  }
+
+  craftsmanProductCountByCategory(cat: string): number {
+    return this.craftsmenProducts.filter(p => p.category === cat).length;
   }
 
   openAddToCatalogModal(product: CraftsmanProduct): void {
@@ -365,22 +426,82 @@ export class VendorDashboardComponent implements OnInit {
   closeAddToCatalogModal(): void {
     this.showAddToCatalogModal = false;
     this.selectedCraftsmanProduct = null;
+    this.addingToCatalog = false;
+  }
+
+  applyMarkup(pct: number): void {
+    if (!this.selectedCraftsmanProduct) return;
+    this.addToCatalogForm.retailPrice = Math.round(this.selectedCraftsmanProduct.wholesalePrice * (1 + pct / 100));
+  }
+
+  get catalogMargin(): { amount: number; pct: number } {
+    if (!this.selectedCraftsmanProduct || !this.addToCatalogForm.retailPrice) return { amount: 0, pct: 0 };
+    const amount = this.addToCatalogForm.retailPrice - this.selectedCraftsmanProduct.wholesalePrice;
+    const pct = this.selectedCraftsmanProduct.wholesalePrice > 0
+      ? Math.round((amount / this.selectedCraftsmanProduct.wholesalePrice) * 100)
+      : 0;
+    return { amount, pct };
   }
 
   addToCatalog(): void {
-    if (this.selectedCraftsmanProduct && this.addToCatalogForm.retailPrice > 0 && this.addToCatalogForm.stock >= 0) {
-      this.vendorService.addToVendorCatalog(
-        this.selectedCraftsmanProduct.id,
-        this.addToCatalogForm.retailPrice,
-        this.addToCatalogForm.stock
-      ).subscribe(product => {
-        if (product) {
-          this.loadDashboardData();
-          this.closeAddToCatalogModal();
-          alert('Product added to your catalog successfully!');
-        }
-      });
+    if (!this.selectedCraftsmanProduct) return;
+    if (this.addToCatalogForm.retailPrice <= 0) {
+      this.toast.warning('Please set a retail price greater than zero.');
+      return;
     }
+    if (this.addToCatalogForm.stock < 0) {
+      this.toast.warning('Stock cannot be negative.');
+      return;
+    }
+    this.addingToCatalog = true;
+    this.vendorService.addToVendorCatalog(
+      this.selectedCraftsmanProduct.id,
+      this.addToCatalogForm.retailPrice,
+      this.addToCatalogForm.stock
+    ).subscribe(product => {
+      this.addingToCatalog = false;
+      if (product) {
+        // Mark in-place so the badge updates without reloading entire dashboard
+        const p = this.craftsmenProducts.find(x => x.id === this.selectedCraftsmanProduct!.id);
+        if (p) p.isSelectedByVendor = true;
+        this.vendorCatalog = [...this.vendorCatalog, product];
+        this.closeAddToCatalogModal();
+      }
+    });
+  }
+
+  // Catalog category filter
+  get catalogCategories(): string[] {
+    return [...new Set(this.vendorCatalog.map(p => p.category).filter(Boolean))].sort();
+  }
+
+  get filteredCatalog(): VendorCatalogProduct[] {
+    if (!this.selectedCatalogCategory) return this.vendorCatalog;
+    return this.vendorCatalog.filter(p => p.category === this.selectedCatalogCategory);
+  }
+
+  catalogCountByCategory(cat: string): number {
+    return this.vendorCatalog.filter(p => p.category === cat).length;
+  }
+
+  // Inventory category filter
+  get inventoryCategories(): string[] {
+    return [...new Set(this.inventoryItems.map(i => i.category).filter(Boolean))].sort();
+  }
+
+  get filteredInventory(): any[] {
+    if (!this.selectedInventoryCategory) return this.inventoryItems;
+    return this.inventoryItems.filter(i => i.category === this.selectedInventoryCategory);
+  }
+
+  inventoryCountByCategory(cat: string): number {
+    return this.inventoryItems.filter(i => i.category === cat).length;
+  }
+
+  resolveImageUrl(url: string): string {
+    if (!url || url === 'assets/images/hero-bg.jpg') return '/assets/images/hero-bg.jpg';
+    if (url.startsWith('http') || url.startsWith('/assets')) return url;
+    return `http://localhost:5037/${url}`;
   }
 
   // Vendor Catalog Management
@@ -411,7 +532,7 @@ export class VendorDashboardComponent implements OnInit {
         if (success) {
           this.loadDashboardData();
           this.closeEditCatalogModal();
-          alert('Product updated successfully!');
+          this.toast.success('Product updated successfully!');
         }
       });
     }
@@ -426,14 +547,15 @@ export class VendorDashboardComponent implements OnInit {
   }
 
   removeFromCatalog(productId: string): void {
-    if (confirm('Are you sure you want to remove this product from your catalog?')) {
+    this.confirmDialog.confirm('Remove this product from your catalog?', 'Remove', 'Cancel').then(confirmed => {
+      if (!confirmed) return;
       this.vendorService.removeFromVendorCatalog(productId).subscribe(success => {
         if (success) {
           this.loadDashboardData();
-          alert('Product removed from catalog!');
+          this.toast.success('Product removed from catalog!');
         }
       });
-    }
+    });
   }
 
   getCatalogStatusClass(product: VendorCatalogProduct): string {
@@ -479,7 +601,8 @@ export class VendorDashboardComponent implements OnInit {
     this.selectedProductForBulkOrder = product;
     this.bulkOrderForm = {
       quantity: 1,
-      notes: ''
+      notes: '',
+      agreeUnitPrice: product.wholesalePrice
     };
     this.showBulkOrderModal = true;
   }
@@ -487,42 +610,48 @@ export class VendorDashboardComponent implements OnInit {
   closeBulkOrderModal(): void {
     this.showBulkOrderModal = false;
     this.selectedProductForBulkOrder = null;
-    this.bulkOrderForm = {
-      quantity: 1,
-      notes: ''
-    };
+    this.bulkOrderSubmitting = false;
+    this.bulkOrderForm = { quantity: 1, notes: '', agreeUnitPrice: 0 };
   }
 
   calculateBulkOrderTotal(): string {
-    if (!this.selectedProductForBulkOrder || !this.bulkOrderForm.quantity) {
-      return '0';
-    }
-    const total = this.selectedProductForBulkOrder.wholesalePrice * this.bulkOrderForm.quantity;
-    return total.toLocaleString();
+    if (!this.selectedProductForBulkOrder || !this.bulkOrderForm.quantity) return '0';
+    const price = this.bulkOrderForm.agreeUnitPrice || this.selectedProductForBulkOrder.wholesalePrice;
+    return (price * this.bulkOrderForm.quantity).toLocaleString();
   }
 
   submitBulkOrder(): void {
     if (!this.selectedProductForBulkOrder || this.bulkOrderForm.quantity < 1) {
-      alert('Please enter a valid quantity');
+      this.toast.warning('Please enter a valid quantity.');
       return;
     }
+    this.bulkOrderSubmitting = true;
+    this.vendorService.submitBulkOrder(
+      this.selectedProductForBulkOrder.id,
+      this.bulkOrderForm.quantity,
+      this.bulkOrderForm.agreeUnitPrice,
+      this.bulkOrderForm.notes
+    ).subscribe(result => {
+      this.bulkOrderSubmitting = false;
+      if (result.success) {
+        this.toast.success(`Bulk order submitted! Order #${result.orderNumber} — the craftsman will be notified.`);
+        this.closeBulkOrderModal();
+        this.vendorService.getBulkOrders().subscribe(orders => { this.bulkOrders = orders; });
+      } else {
+        this.toast.error(result.message || 'Failed to submit bulk order.');
+      }
+    });
+  }
 
-    // In a real app, this would send the order to the backend
-    const orderDetails = {
-      productId: this.selectedProductForBulkOrder.id,
-      productName: this.selectedProductForBulkOrder.name,
-      craftsmanId: this.selectedProductForBulkOrder.craftsmanId,
-      quantity: this.bulkOrderForm.quantity,
-      wholesalePrice: this.selectedProductForBulkOrder.wholesalePrice,
-      totalAmount: this.selectedProductForBulkOrder.wholesalePrice * this.bulkOrderForm.quantity,
-      notes: this.bulkOrderForm.notes,
-      orderDate: new Date()
-    };
-
-    console.log('Bulk Order Request:', orderDetails);
-    alert(`Bulk order request submitted!\n\nProduct: ${orderDetails.productName}\nQuantity: ${orderDetails.quantity} units\nTotal: Rs. ${orderDetails.totalAmount.toLocaleString()}\n\nThe craftsman will be notified of your order.`);
-    
-    this.closeBulkOrderModal();
+  getBulkOrderStatusClass(status: string): string {
+    switch (status?.toLowerCase()) {
+      case 'pending': return 'status-pending';
+      case 'accepted': return 'status-processing';
+      case 'inproduction': return 'status-shipped';
+      case 'readyfordispatch': return 'status-shipped';
+      case 'dispatched': return 'status-delivered';
+      default: return '';
+    }
   }
 
   logout(): void {

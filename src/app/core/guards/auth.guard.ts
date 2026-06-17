@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router, CanActivate, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { ToastService } from '../services/toast.service';
 
 @Injectable({
   providedIn: 'root'
@@ -8,7 +9,8 @@ import { AuthService } from '../services/auth.service';
 export class AuthGuard implements CanActivate {
   constructor(
     private router: Router,
-    private authService: AuthService
+    private authService: AuthService,
+    private toast: ToastService
   ) { }
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean {
@@ -20,7 +22,7 @@ export class AuthGuard implements CanActivate {
         return true;
       } else {
         // User is logged in but not approved
-        alert('Your account is pending approval. Please wait for admin approval.');
+        this.toast.warning('Your account is pending approval. Please wait for admin approval.');
         this.authService.logout();
         return false;
       }

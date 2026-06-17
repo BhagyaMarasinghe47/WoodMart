@@ -6,6 +6,25 @@
   min-height: 100vh;
 }
 
+.loading,
+.error-message {
+  padding: 16px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.loading {
+  background: #fff;
+  color: #666;
+}
+
+.error-message {
+  background: #fdecea;
+  color: #c0392b;
+  border: 1px solid #f5c6cb;
+}
+
 /* Header */
 .header {
   display: flex;

@@ -3,7 +3,9 @@ export interface Product {
   name: string;
   description: string;
   category: string;
+  categoryId?: number;
   subcategory?: string;
+  subcategoryId?: number;
   wholesalePrice: number;
   retailPrice: number;
   stock: number;
@@ -22,6 +24,7 @@ export interface Product {
 export interface Category {
   id: string;
   name: string;
+  slug?: string;
   description: string;
   imageUrl: string;
   productCount: number;

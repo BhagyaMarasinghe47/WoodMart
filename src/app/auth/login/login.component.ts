@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
-import { UserRole } from '../../core/models/user.model';
 
 @Component({
   selector: 'app-login',
@@ -15,6 +14,7 @@ export class LoginComponent implements OnInit {
   loading = false;
   error = '';
   returnUrl = '/';
+  showPassword = false;
 
   constructor(
     private authService: AuthService,
@@ -38,9 +38,15 @@ export class LoginComponent implements OnInit {
 
   onSubmit(): void {
     this.error = '';
-    
+
     if (!this.email || !this.password) {
       this.error = 'Please enter both email and password';
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.email.trim())) {
+      this.error = 'Please enter a valid email address (e.g. craftsman1@example.com)';
       return;
     }
 
@@ -51,25 +57,17 @@ export class LoginComponent implements OnInit {
 
     this.authService.login(this.email, this.password).subscribe({
       next: (user) => {
-        if (user) {
-          // Login successful
-          const dashboardRoute = this.authService.getDashboardRoute(user.role);
-          
-          // If there's a return URL and it's not the login page, go there
-          if (this.returnUrl && this.returnUrl !== '/' && this.returnUrl !== '/login') {
-            this.router.navigate([this.returnUrl]);
-          } else {
-            // Otherwise go to role-specific dashboard
-            this.router.navigate([dashboardRoute]);
-          }
+        this.loading = false;
+        const dashboardRoute = this.authService.getDashboardRoute(user!.role);
+
+        if (this.returnUrl && this.returnUrl !== '/' && this.returnUrl !== '/login') {
+          this.router.navigate([this.returnUrl]);
         } else {
-          this.error = 'Invalid email or password, or account is pending approval';
-          this.loading = false;
+          this.router.navigate([dashboardRoute]);
         }
       },
-      error: (error) => {
-        console.error('Login error:', error);
-        this.error = 'An error occurred during login';
+      error: (err: Error) => {
+        this.error = err.message || 'Login failed. Please try again.';
         this.loading = false;
       }
     });

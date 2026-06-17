@@ -49,8 +49,11 @@
     </button>
   </div>
 
+  <div *ngIf="loading" class="loading">Loading users...</div>
+  <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+
   <!-- Users Table -->
-  <div class="table-container">
+  <div *ngIf="!loading" class="table-container">
     <table class="users-table">
       <thead>
         <tr>

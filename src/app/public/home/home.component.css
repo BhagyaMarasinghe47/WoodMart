@@ -6,7 +6,7 @@
 
 /* Hero Section */
 .hero-section {
-  background-image: url('/assets/images/hero-bg.jpg');
+  background-image: url('/assets/images/hero-wood-bg.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -22,13 +22,15 @@
 .hero-content h1 {
   font-size: 3rem;
   margin-bottom: 20px;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  color: #fff8f0;
+  text-shadow: 2px 3px 8px rgba(0,0,0,0.65);
 }
 
 .hero-content p {
   font-size: 1.5rem;
   margin-bottom: 30px;
-  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+  color: #f5e6d3;
+  text-shadow: 1px 2px 5px rgba(0,0,0,0.55);
 }
 
 /* Categories Section */
@@ -352,6 +354,10 @@
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.3s ease;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #e0d5c8;
 }
 
 .look-card:hover {
@@ -381,19 +387,6 @@
 .look-card:nth-child(5) {
   grid-column: 3;
   grid-row: 2;
-}
-
-.look-image-container {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-
-.look-image-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
 }
 
 .look-overlay {

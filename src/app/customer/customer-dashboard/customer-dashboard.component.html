@@ -1,51 +1,218 @@
 <div class="dashboard-container">
+
+  <!-- Order placed success banner -->
+  <div *ngIf="newOrderNumber" class="order-success-banner">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+      <polyline points="22 4 12 14.01 9 11.01"></polyline>
+    </svg>
+    <div>
+      <strong>Order placed successfully!</strong>
+      <span *ngIf="newOrderNumber"> &nbsp;Order #{{ newOrderNumber }}</span>
+      &nbsp;— we'll keep you updated on its progress.
+    </div>
+    <button class="banner-close" (click)="dismissSuccess()">✕</button>
+  </div>
+
   <div class="dashboard-header">
-    <h1>Customer Dashboard</h1>
+    <h1>My Orders</h1>
   </div>
 
   <div class="quick-actions">
     <a routerLink="/products" class="action-card">
-      <h3>🛍️ Browse Products</h3>
+      <span class="action-icon">🛒</span>
+      <h3>Browse Products</h3>
       <p>Explore our handcrafted collection</p>
     </a>
     <a routerLink="/cart" class="action-card">
-      <h3>🛒 View Cart</h3>
+      <span class="action-icon">🛍️</span>
+      <h3>View Cart</h3>
       <p>Check your shopping cart</p>
+    </a>
+    <a routerLink="/wishlist" class="action-card">
+      <span class="action-icon">❤️</span>
+      <h3>My Wishlist</h3>
+      <p>Items you've saved for later</p>
     </a>
   </div>
 
   <div class="section">
-    <h2>My Orders</h2>
+    <h2>Order History</h2>
+
     <div *ngIf="loading" class="loading">Loading orders...</div>
+
     <div *ngIf="!loading && orders.length === 0" class="empty-state">
-      No orders yet. Start shopping!
+      <span style="font-size:3rem">📦</span>
+      <p>No orders yet. <a routerLink="/products">Start shopping!</a></p>
     </div>
+
     <div *ngIf="!loading && orders.length > 0" class="orders-list">
-      <div *ngFor="let order of orders" class="order-card">
+      <div *ngFor="let order of orders" class="order-card" [class.cancelled]="isCancelled(order)">
+
+        <!-- Order header -->
         <div class="order-header">
-          <h3>Order #{{ order.id }}</h3>
-          <span class="status-badge" [class]="'status-' + order.status">{{ order.status }}</span>
-        </div>
-        <div class="order-details">
-          <p><strong>Date:</strong> {{ order.createdAt | date }}</p>
-          <p><strong>Total:</strong> Rs. {{ order.totalAmount.toLocaleString() }}</p>
-        </div>
-        
-        <!-- Order Items with Images -->
-        <div class="order-items">
-          <h4>Items ({{ order.items.length }}):</h4>
-          <div class="items-grid">
-            <div *ngFor="let item of order.items" class="order-item">
-              <img [src]="item.productImage" [alt]="item.productName" class="item-image">
-              <div class="item-details">
-                <p class="item-name">{{ item.productName }}</p>
-                <p class="item-info">Qty: {{ item.quantity }} × Rs. {{ item.price.toLocaleString() }}</p>
-                <p class="item-subtotal">Rs. {{ item.subtotal.toLocaleString() }}</p>
-              </div>
-            </div>
+          <div class="order-meta">
+            <h3>Order #{{ order.orderNumber || order.id }}</h3>
+            <span class="order-date">{{ order.createdAt | date:'mediumDate' }}</span>
           </div>
+          <div class="header-right">
+            <span class="status-badge" [class]="'status-' + order.status">{{ order.status }}</span>
+            <span class="order-total">Rs. {{ order.totalAmount.toLocaleString() }}</span>
+          </div>
+        </div>
+
+        <!-- STATUS TRACKER (only for active orders) -->
+        <div *ngIf="!isCancelled(order)" class="status-tracker">
+          <div class="tracker-steps">
+            <ng-container *ngFor="let step of trackSteps; let i = index; let last = last">
+              <div class="tracker-step" [class]="stepState(order, step)">
+                <div class="step-circle">
+                  <span *ngIf="stepState(order, step) === 'done'" class="step-check">✓</span>
+                  <span *ngIf="stepState(order, step) !== 'done'" class="step-num">{{ i + 1 }}</span>
+                </div>
+                <div class="step-label">{{ step.label }}</div>
+              </div>
+              <div *ngIf="!last" class="tracker-line" [class.filled]="stepState(order, step) === 'done'"></div>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- CANCELLED banner -->
+        <div *ngIf="isCancelled(order)" class="cancelled-banner">
+          <span>✕</span> This order was cancelled
+        </div>
+
+        <!-- Order details row -->
+        <div class="order-details">
+          <span><strong>Ship to:</strong> {{ order.shippingAddress }}</span>
+          <span *ngIf="order.paymentMethod"><strong>Payment:</strong> {{ order.paymentMethod }}</span>
+        </div>
+
+        <!-- Actions row -->
+        <div class="order-actions">
+          <button class="btn-view-detail" (click)="openDetail(order)">View Details</button>
+          <button
+            *ngIf="canCancel(order)"
+            class="btn-cancel"
+            [disabled]="cancellingId === order.id"
+            (click)="cancelOrder(order)">
+            {{ cancellingId === order.id ? 'Cancelling...' : 'Cancel Order' }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ORDER DETAIL DRAWER ─────────────────────────────── -->
+<div class="drawer-backdrop" *ngIf="detailOrder" (click)="closeDetail()"></div>
+
+<div class="order-drawer" [class.open]="detailOrder" *ngIf="detailOrder">
+  <div class="drawer-header">
+    <div>
+      <h2>Order #{{ detailOrder.orderNumber }}</h2>
+      <span class="drawer-date">{{ detailOrder.createdAt | date:'mediumDate' }}</span>
+    </div>
+    <button class="drawer-close" (click)="closeDetail()">✕</button>
+  </div>
+
+  <!-- Status tracker inside drawer -->
+  <div *ngIf="!isCancelled(detailOrder)" class="drawer-tracker">
+    <div class="tracker-steps">
+      <ng-container *ngFor="let step of trackSteps; let i = index; let last = last">
+        <div class="tracker-step" [class]="stepState(detailOrder, step)">
+          <div class="step-circle">
+            <span *ngIf="stepState(detailOrder, step) === 'done'" class="step-check">✓</span>
+            <span *ngIf="stepState(detailOrder, step) !== 'done'" class="step-num">{{ i + 1 }}</span>
+          </div>
+          <div class="step-label">{{ step.label }}</div>
+        </div>
+        <div *ngIf="!last" class="tracker-line" [class.filled]="stepState(detailOrder, step) === 'done'"></div>
+      </ng-container>
+    </div>
+  </div>
+  <div *ngIf="isCancelled(detailOrder)" class="cancelled-banner">
+    <span>✕</span> This order was cancelled
+  </div>
+
+  <div class="drawer-body">
+
+    <!-- Items section -->
+    <div class="drawer-section">
+      <h3 class="section-title">Items Ordered</h3>
+      <div class="drawer-items">
+        <div *ngFor="let item of detailOrder.items" class="drawer-item">
+          <img [src]="item.productImage" [alt]="item.productName" class="drawer-item-img">
+          <div class="drawer-item-info">
+            <p class="drawer-item-name">{{ item.productName }}</p>
+            <p class="drawer-item-meta">Qty {{ item.quantity }} × Rs. {{ item.price.toLocaleString() }}</p>
+          </div>
+          <span class="drawer-item-sub">Rs. {{ item.subtotal.toLocaleString() }}</span>
+        </div>
+      </div>
+      <div class="drawer-total-row">
+        <span>Order Total</span>
+        <span class="drawer-total">Rs. {{ detailOrder.totalAmount.toLocaleString() }}</span>
+      </div>
+    </div>
+
+    <!-- Delivery section -->
+    <div class="drawer-section">
+      <h3 class="section-title">Delivery Details</h3>
+      <div class="detail-grid">
+        <div class="detail-row">
+          <span class="detail-label">Address</span>
+          <span class="detail-value">{{ fullDeliveryAddress(detailOrder) }}</span>
+        </div>
+        <div class="detail-row" *ngIf="detailOrder.estimatedDelivery">
+          <span class="detail-label">Est. Delivery</span>
+          <span class="detail-value">{{ detailOrder.estimatedDelivery | date:'mediumDate' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="detailOrder.notes">
+          <span class="detail-label">Notes</span>
+          <span class="detail-value">{{ detailOrder.notes }}</span>
         </div>
       </div>
     </div>
+
+    <!-- Payment section -->
+    <div class="drawer-section">
+      <h3 class="section-title">Payment</h3>
+      <div class="detail-grid">
+        <div class="detail-row">
+          <span class="detail-label">Method</span>
+          <span class="detail-value">{{ detailOrder.paymentMethod }}</span>
+        </div>
+        <div class="detail-row" *ngIf="detailOrder.paymentStatus">
+          <span class="detail-label">Status</span>
+          <span class="detail-value pay-status" [class.pay-completed]="detailOrder.paymentStatus === 'Completed'">
+            {{ detailOrder.paymentStatus }}
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="detailOrder.paymentDate">
+          <span class="detail-label">Paid on</span>
+          <span class="detail-value">{{ detailOrder.paymentDate | date:'mediumDate' }}</span>
+        </div>
+        <div class="detail-row" *ngIf="detailOrder.paymentTransactionId">
+          <span class="detail-label">Transaction ID</span>
+          <span class="detail-value txn-id">{{ detailOrder.paymentTransactionId }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Amount Paid</span>
+          <span class="detail-value"><strong>Rs. {{ (detailOrder.paymentAmount ?? detailOrder.totalAmount).toLocaleString() }}</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cancel button inside drawer -->
+    <div class="drawer-footer" *ngIf="canCancel(detailOrder)">
+      <button class="btn-cancel-full"
+        [disabled]="cancellingId === detailOrder.id"
+        (click)="cancelOrder(detailOrder); closeDetail()">
+        {{ cancellingId === detailOrder.id ? 'Cancelling...' : 'Cancel This Order' }}
+      </button>
+    </div>
+
   </div>
 </div>

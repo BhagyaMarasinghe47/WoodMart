@@ -1,8 +1,45 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { delay } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 import { User, UserRole, ApprovalStatus } from '../models/user.model';
 import { Router } from '@angular/router';
+
+interface ApiUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  approvalStatus: string;
+  phone?: string;
+  profileImageUrl?: string;
+}
+
+interface LoginResponse {
+  success: boolean;
+  message: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user?: ApiUser;
+}
+
+interface RegisterResponse {
+  success: boolean;
+  message: string;
+  user?: ApiUser;
+}
+
+interface RegisterRequest {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  roleId: number;
+  phoneNumber?: string;
+  city?: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -11,8 +48,13 @@ export class AuthService {
   private currentUserSubject: BehaviorSubject<User | null>;
   public currentUser: Observable<User | null>;
   private readonly STORAGE_KEY = 'woodmart_current_user';
+  private readonly TOKEN_KEY = 'woodmart_token';
+  private readonly REFRESH_TOKEN_KEY = 'woodmart_refresh_token';
 
-  constructor(private router: Router) {
+  constructor(
+    private http: HttpClient,
+    private router: Router
+  ) {
     const storedUser = localStorage.getItem(this.STORAGE_KEY);
     this.currentUserSubject = new BehaviorSubject<User | null>(
       storedUser ? JSON.parse(storedUser) : null
@@ -24,85 +66,61 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-  // Mock user database
-  private mockUsers: User[] = [
-    {
-      id: '1',
-      email: 'admin@woodmart.com',
-      password: 'admin123',
-      firstName: 'Admin',
-      lastName: 'User',
-      role: UserRole.ADMIN,
-      approvalStatus: ApprovalStatus.APPROVED,
-      createdAt: new Date(),
-      phone: '+1234567890'
-    },
-    {
-      id: '2',
-      email: 'craftsman@woodmart.com',
-      password: 'craft123',
-      firstName: 'John',
-      lastName: 'Carpenter',
-      role: UserRole.CRAFTSMAN,
-      approvalStatus: ApprovalStatus.APPROVED,
-      createdAt: new Date(),
-      phone: '+1234567891'
-    },
-    {
-      id: '3',
-      email: 'vendor@woodmart.com',
-      password: 'vendor123',
-      firstName: 'Jane',
-      lastName: 'Vendor',
-      role: UserRole.VENDOR,
-      approvalStatus: ApprovalStatus.APPROVED,
-      createdAt: new Date(),
-      phone: '+1234567892'
-    },
-    {
-      id: '4',
-      email: 'customer@woodmart.com',
-      password: 'customer123',
-      firstName: 'Bob',
-      lastName: 'Customer',
-      role: UserRole.CUSTOMER,
-      approvalStatus: ApprovalStatus.APPROVED,
-      createdAt: new Date(),
-      phone: '+1234567893',
-      address: '123 Main St, City, Country'
-    }
-  ];
+  public getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
+  }
 
-  // Simulate API login with delay
+  public getRefreshToken(): string | null {
+    return localStorage.getItem(this.REFRESH_TOKEN_KEY);
+  }
+
   login(email: string, password: string): Observable<User | null> {
-    const user = this.mockUsers.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-      // Check approval status
-      if (user.approvalStatus !== ApprovalStatus.APPROVED && user.role !== UserRole.ADMIN) {
-        return of(null).pipe(delay(500));
-      }
-
-      // Don't store password in localStorage
-      const userToStore = { ...user };
-      delete userToStore.password;
-      
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(userToStore));
-      this.currentUserSubject.next(userToStore);
-      return of(userToStore).pipe(delay(500));
-    }
-    
-    return of(null).pipe(delay(500));
+    return this.http.post<LoginResponse>(
+      `${environment.apiUrl}/auth/login`,
+      { email, password }
+    ).pipe(
+      tap(response => {
+        if (response.success && response.accessToken) {
+          this.persistSession(response.accessToken, response.refreshToken, response.user, email);
+        }
+      }),
+      map(response => {
+        if (response.success && response.accessToken) {
+          return this.mapApiUser(response.user, email);
+        }
+        throw new Error(response.message || 'Login failed.');
+      }),
+      catchError(error => {
+        console.error('Login error:', error);
+        const message =
+          error?.error?.message ||
+          error?.message ||
+          'Login failed. Please check your email and password.';
+        return throwError(() => new Error(message));
+      })
+    );
   }
 
   logout(): void {
+    const refreshToken = this.getRefreshToken();
+    if (refreshToken) {
+      this.http.post(
+        `${environment.apiUrl}/auth/logout`,
+        { refreshToken }
+      ).pipe(
+        catchError(() => of(null))
+      ).subscribe();
+    }
+
     localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
   }
 
   isAuthenticated(): boolean {
-    return this.currentUserValue !== null;
+    return this.currentUserValue !== null && this.getToken() !== null;
   }
 
   hasRole(roles: UserRole[]): boolean {
@@ -117,7 +135,6 @@ export class AuthService {
     return user.approvalStatus === ApprovalStatus.APPROVED || user.role === UserRole.ADMIN;
   }
 
-  // Get dashboard route based on role
   getDashboardRoute(role: UserRole): string {
     switch (role) {
       case UserRole.ADMIN:
@@ -127,88 +144,134 @@ export class AuthService {
       case UserRole.VENDOR:
         return '/vendor/dashboard';
       case UserRole.CUSTOMER:
-        return '/customer/dashboard';
+        return '/';
       default:
         return '/';
     }
   }
 
-  // Register new user (mock registration - frontend only)
+  refreshToken(): Observable<any> {
+    const refreshToken = this.getRefreshToken();
+    if (!refreshToken) {
+      return of(null);
+    }
+
+    return this.http.post<{ accessToken: string; refreshToken?: string }>(
+      `${environment.apiUrl}/auth/refresh-token`,
+      { refreshToken }
+    ).pipe(
+      tap(response => {
+        localStorage.setItem(this.TOKEN_KEY, response.accessToken);
+        if (response.refreshToken) {
+          localStorage.setItem(this.REFRESH_TOKEN_KEY, response.refreshToken);
+        }
+      }),
+      catchError(() => {
+        this.logout();
+        return of(null);
+      })
+    );
+  }
+
+  uploadProfileImage(file: File): Observable<{ imageUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ imageUrl: string }>(
+      `${environment.apiUrl}/users/upload-profile-image`,
+      formData
+    );
+  }
+
+  updateProfile(userId: string, data: { firstName?: string; lastName?: string; phone?: string; city?: string; profileImageUrl?: string }): Observable<any> {
+    return this.http.put<any>(
+      `${environment.apiUrl}/users/${userId}/profile`,
+      { firstName: data.firstName, lastName: data.lastName, phone: data.phone, city: data.city, profileImageUrl: data.profileImageUrl }
+    ).pipe(
+      tap(() => {
+        const current = this.currentUserValue;
+        if (current) {
+          const updated: User = { ...current, ...data };
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(updated));
+          this.currentUserSubject.next(updated);
+        }
+      })
+    );
+  }
+
   register(userData: {
-    fullName: string;
+    firstName: string;
+    lastName: string;
     email: string;
     contactNumber: string;
     password: string;
     cityArea?: string;
     role: 'CUSTOMER' | 'VENDOR' | 'CRAFTSMAN';
-    // Vendor-specific fields
-    pharmacyName?: string;
-    pharmacyRegistrationNumber?: string;
-    pharmacyAddress?: string;
-    deliveryAvailable?: boolean;
-  }): { success: boolean; message: string } {
-    // Check if email already exists
-    const existingUser = this.mockUsers.find(u => u.email === userData.email);
-    if (existingUser) {
-      return {
-        success: false,
-        message: 'Email already registered. Please use a different email.'
-      };
-    }
-
-    // Parse full name
-    const nameParts = userData.fullName.trim().split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ') || firstName;
-
-    // Create new user
-    const newUser: User = {
-      id: String(this.mockUsers.length + 1),
-      email: userData.email,
-      password: userData.password,
-      firstName: firstName,
-      lastName: lastName,
-      role: UserRole[userData.role],
-      // CUSTOMER can login immediately, VENDOR/CRAFTSMAN need admin approval
-      approvalStatus: userData.role === 'CUSTOMER' 
-        ? ApprovalStatus.APPROVED 
-        : ApprovalStatus.PENDING,
-      createdAt: new Date(),
-      phone: userData.contactNumber,
-      address: userData.cityArea || ''
+  }): Observable<{ success: boolean; message: string }> {
+    const roleMap: { [key: string]: number } = {
+      'CUSTOMER': 4,
+      'VENDOR': 3,
+      'CRAFTSMAN': 2,
+      'ADMIN': 1
     };
 
-    // Add to mock database (Note: Vendor-specific fields like pharmacyName, 
-    // pharmacyRegistrationNumber, pharmacyAddress, and deliveryAvailable 
-    // would be stored in the backend database in a real application)
-    this.mockUsers.push(newUser);
+    const registerRequest: RegisterRequest = {
+      email: userData.email,
+      password: userData.password,
+      firstName: userData.firstName.trim(),
+      lastName: userData.lastName.trim(),
+      roleId: roleMap[userData.role] || 4,
+      phoneNumber: userData.contactNumber,
+      city: userData.cityArea
+    };
 
-    // Log vendor details for mock purposes
-    if (userData.role === 'VENDOR' && userData.pharmacyName) {
-      console.log('Vendor Registration Details:', {
-        pharmacyName: userData.pharmacyName,
-        registrationNumber: userData.pharmacyRegistrationNumber,
-        address: userData.pharmacyAddress,
-        deliveryAvailable: userData.deliveryAvailable
-      });
-    }
-
-    // Return appropriate message
-    if (userData.role === 'CUSTOMER') {
-      return {
-        success: true,
-        message: 'Registration successful! You can now login.'
-      };
-    } else {
-      return {
-        success: true,
-        message: `Registration submitted for admin approval. You will be able to login once approved.`
-      };
-    }
+    return this.http.post<RegisterResponse>(
+      `${environment.apiUrl}/auth/register`,
+      registerRequest
+    ).pipe(
+      map(response => ({
+        success: response.success ?? true,
+        message: response.message || 'Registration successful.'
+      })),
+      catchError(error => {
+        console.error('Registration error:', error);
+        const message = error.error?.message
+          || (typeof error.error === 'string' ? error.error : null)
+          || 'Registration failed. Please try again.';
+        return of({ success: false, message });
+      })
+    );
   }
 
-  // Get all pending users (for admin dashboard)
-  getPendingUsers(): User[] {
-    return this.mockUsers.filter(u => u.approvalStatus === ApprovalStatus.PENDING);
+  private persistSession(
+    accessToken: string,
+    refreshToken: string | undefined,
+    apiUser: ApiUser | undefined,
+    fallbackEmail: string
+  ): void {
+    localStorage.setItem(this.TOKEN_KEY, accessToken);
+    if (refreshToken) {
+      localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+    }
+
+    const user = this.mapApiUser(apiUser, fallbackEmail);
+    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
+    this.currentUserSubject.next(user);
+  }
+
+  private mapApiUser(apiUser: ApiUser | undefined, fallbackEmail: string): User {
+    const roleKey = (apiUser?.role || 'CUSTOMER').toUpperCase() as keyof typeof UserRole;
+    const statusKey = (apiUser?.approvalStatus || 'APPROVED').toUpperCase() as keyof typeof ApprovalStatus;
+
+    return {
+      id: apiUser?.id ?? '',
+      email: apiUser?.email ?? fallbackEmail,
+      firstName: apiUser?.firstName || '',
+      lastName: apiUser?.lastName || '',
+      role: UserRole[roleKey] ?? UserRole.CUSTOMER,
+      approvalStatus: ApprovalStatus[statusKey] ?? ApprovalStatus.APPROVED,
+      createdAt: new Date(),
+      phone: apiUser?.phone || '',
+      profileImageUrl: apiUser?.profileImageUrl
+    };
   }
 }

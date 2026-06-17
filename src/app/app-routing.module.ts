@@ -11,6 +11,7 @@ import { ProductDetailComponent } from './public/product-detail/product-detail.c
 import { CartComponent } from './public/cart/cart.component';
 import { ShopsComponent } from './public/shops/shops.component';
 import { CategoryComponent } from './public/category/category.component';
+import { WishlistComponent } from './public/wishlist/wishlist.component';
 
 // Auth Components
 import { LoginComponent } from './auth/login/login.component';
@@ -23,6 +24,8 @@ import { UserManagementComponent } from './admin/user-management/user-management
 import { CraftsmanDashboardComponent } from './craftsman/craftsman-dashboard/craftsman-dashboard.component';
 import { VendorDashboardComponent } from './vendor/vendor-dashboard/vendor-dashboard.component';
 import { CustomerDashboardComponent } from './customer/customer-dashboard/customer-dashboard.component';
+import { CheckoutComponent } from './customer/checkout/checkout.component';
+import { ProfileComponent } from './profile/profile.component';
 
 const routes: Routes = [
   // Public Routes (NO AUTH REQUIRED)
@@ -32,6 +35,7 @@ const routes: Routes = [
   { path: 'shops', component: ShopsComponent },
   { path: 'category/:categoryName', component: CategoryComponent },
   { path: 'cart', component: CartComponent },
+  { path: 'wishlist', component: WishlistComponent, canActivate: [AuthGuard] },
   
   // Auth Routes
   { path: 'auth', component: AuthSelectionComponent },
@@ -79,10 +83,14 @@ const routes: Routes = [
     data: { roles: [UserRole.CUSTOMER, UserRole.ADMIN] },
     children: [
       { path: 'dashboard', component: CustomerDashboardComponent },
-      { path: 'checkout', component: CustomerDashboardComponent }, // Placeholder
+      { path: 'orders', component: CustomerDashboardComponent },
+      { path: 'checkout', component: CheckoutComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },
+
+  // Profile (all authenticated users)
+  { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
 
   // Redirect unknown routes to home
   { path: '**', redirectTo: '' }

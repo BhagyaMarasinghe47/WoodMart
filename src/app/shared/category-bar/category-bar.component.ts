@@ -17,31 +17,30 @@ export class CategoryBarComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Fetch all categories from service
-    this.categories = this.categoryService.getAllCategories();
+    this.categoryService.loadCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories;
+      }
+    });
   }
 
-  // Show dropdown on hover
   showDropdown(categoryId: string): void {
     this.activeDropdown = categoryId;
   }
 
-  // Hide dropdown
   hideDropdown(): void {
     this.activeDropdown = null;
   }
 
-  // Navigate to category page
   navigateToCategory(categorySlug: string): void {
     this.hideDropdown();
     this.router.navigate(['/category', categorySlug]);
   }
 
-  // Navigate to sub-category filtered page
   navigateToSubCategory(categorySlug: string, subCategorySlug: string): void {
     this.hideDropdown();
-    this.router.navigate(['/category', categorySlug], { 
-      queryParams: { sub: subCategorySlug } 
+    this.router.navigate(['/category', categorySlug], {
+      queryParams: { sub: subCategorySlug }
     });
   }
 }

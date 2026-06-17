@@ -36,8 +36,11 @@
         <p class="product-count">{{ products.length }} products found</p>
       </div>
 
+      <div *ngIf="loading" class="loading">Loading products...</div>
+      <div *ngIf="errorMessage" class="error-message">{{ errorMessage }}</div>
+
       <!-- Product Grid -->
-      <div class="products-grid">
+      <div *ngIf="!loading" class="products-grid">
         <div *ngFor="let product of products" class="product-card">
           <div class="product-image" (click)="viewProductDetail(product.id)">
             <img [src]="product.image" [alt]="product.name">

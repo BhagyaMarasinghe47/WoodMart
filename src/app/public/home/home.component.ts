@@ -1,8 +1,10 @@
 import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { ProductService } from '../../core/services/product.service';
 import { CartService } from '../../core/services/cart.service';
 import { Product, Category } from '../../core/models/product.model';
+import { slugify } from '../../core/utils/slug.util';
 
 @Component({
   selector: 'app-home',
@@ -20,27 +22,27 @@ export class HomeComponent implements OnInit {
     {
       title: 'Bedroom Serenity',
       category: 'Bedroom Furniture',
-      imageUrl: 'assets/images/bedroom-serenity.jpg'
+      imageUrl: '/assets/images/bedroom-serenity.jpg'
     },
     {
       title: 'Modern Office',
       category: 'Office Furniture',
-      imageUrl: 'assets/images/office-space.jpg'
+      imageUrl: '/assets/images/office-space.jpg'
     },
     {
       title: 'Dining Elegance',
-      category: 'Dining Room Furniture',
-      imageUrl: 'assets/images/dining-elegance.jpg'
+      category: 'Dining Room',
+      imageUrl: '/assets/images/dining-elegance.jpg'
     },
     {
       title: 'Cozy Retreat',
-      category: 'Living Room Furniture',
-      imageUrl: 'assets/images/cozy-nook.jpg'
+      category: 'Living Room',
+      imageUrl: '/assets/images/cozy-nook.jpg'
     },
     {
-      title: 'Dining Room',
-      category: 'Dining Room Furniture',
-      imageUrl: 'assets/images/dining-room.jpg'
+      title: 'Outdoor Living',
+      category: 'Outdoor Furniture',
+      imageUrl: '/assets/images/dining-room.jpg'
     }
   ];
 
@@ -51,31 +53,39 @@ export class HomeComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.loadFeaturedProducts();
-    this.loadCategories();
+    this.loadData();
   }
 
-  loadFeaturedProducts(): void {
-    this.productService.getAllProducts().subscribe({
-      next: (products) => {
+  loadData(): void {
+    forkJoin({
+      products: this.productService.getAllProducts(),
+      categories: this.productService.getAllCategories()
+    }).subscribe({
+      next: ({ products, categories }) => {
         this.featuredProducts = products.slice(0, 6);
         this.loading = false;
-      },
-      error: (error) => {
-        console.error('Error loading products:', error);
-        this.loading = false;
-      }
-    });
-  }
 
-  loadCategories(): void {
-    this.productService.getAllCategories().subscribe({
-      next: (categories) => {
-        this.categories = categories;
+        // Build per-category count and first real image from actual product list
+        const countMap = new Map<string, number>();
+        const imageMap = new Map<string, string>();
+        for (const p of products) {
+          const key = p.category?.toLowerCase() ?? '';
+          countMap.set(key, (countMap.get(key) ?? 0) + 1);
+          if (!imageMap.has(key) && p.imageUrl && !p.imageUrl.includes('hero-bg')) {
+            imageMap.set(key, p.imageUrl);
+          }
+        }
+
+        this.categories = categories.map(cat => {
+          const key = cat.name.toLowerCase();
+          return {
+            ...cat,
+            productCount: countMap.get(key) ?? 0,
+            imageUrl: imageMap.get(key) || cat.imageUrl
+          };
+        });
       },
-      error: (error) => {
-        console.error('Error loading categories:', error);
-      }
+      error: () => { this.loading = false; }
     });
   }
 
@@ -98,14 +108,14 @@ export class HomeComponent implements OnInit {
   }
 
   addToCart(product: Product): void {
+    if (product.stock === 0) return;
     this.cartService.addToCart(
       product.id,
       product.name,
       product.imageUrl,
       product.retailPrice,
       product.stock
-    );
-    alert(`${product.name} added to cart!`);
+    ).subscribe(result => this.cartService.notifyAddResult(result, product.name));
   }
 
   viewProduct(productId: string): void {
@@ -113,7 +123,7 @@ export class HomeComponent implements OnInit {
   }
 
   viewCategory(categoryName: string): void {
-    this.router.navigate(['/products'], { queryParams: { category: categoryName } });
+    this.router.navigate(['/category', slugify(categoryName)]);
   }
 
   viewAllProducts(): void {

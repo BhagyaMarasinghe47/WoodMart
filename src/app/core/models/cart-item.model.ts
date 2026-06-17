@@ -1,4 +1,5 @@
 export interface CartItem {
+  cartItemId: string;
   productId: string;
   productName: string;
   productImage: string;
@@ -11,4 +12,10 @@ export interface Cart {
   items: CartItem[];
   totalItems: number;
   totalPrice: number;
+}
+
+export interface CartActionResult {
+  success: boolean;
+  message: string;
+  loginRequired?: boolean;
 }

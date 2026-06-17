@@ -15,7 +15,11 @@
     </div>
   </div>
 
-  <div class="shops-grid">
+  <div *ngIf="loading" class="no-results">
+    <p>Loading shops...</p>
+  </div>
+
+  <div class="shops-grid" *ngIf="!loading">
     <div *ngFor="let shop of filteredShops" class="shop-card">
       <div class="shop-image">
         <img [src]="shop.image" [alt]="shop.name">
@@ -46,7 +50,7 @@
     </div>
   </div>
 
-  <div *ngIf="filteredShops.length === 0" class="no-results">
+  <div *ngIf="!loading && filteredShops.length === 0" class="no-results">
     <p>No shops found matching your search.</p>
   </div>
 </div>

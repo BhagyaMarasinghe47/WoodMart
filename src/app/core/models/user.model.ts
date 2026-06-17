@@ -9,7 +9,8 @@ export enum UserRole {
 export enum ApprovalStatus {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED'
+  REJECTED = 'REJECTED',
+  DISABLED = 'DISABLED'
 }
 
 export interface User {
@@ -22,5 +23,7 @@ export interface User {
   approvalStatus: ApprovalStatus;
   createdAt: Date;
   phone?: string;
+  city?: string;
   address?: string;
+  profileImageUrl?: string;
 }

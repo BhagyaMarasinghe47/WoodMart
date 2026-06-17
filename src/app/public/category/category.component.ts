@@ -12,6 +12,8 @@ export class CategoryComponent implements OnInit {
   category: Category | undefined;
   products: CategoryProduct[] = [];
   selectedSubCategory: string | null = null;
+  loading = true;
+  errorMessage = '';
 
   constructor(
     private route: ActivatedRoute,
@@ -21,40 +23,55 @@ export class CategoryComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // Listen to route params and query params
-    this.route.params.subscribe(params => {
-      const categorySlug = params['categoryName'];
-      this.loadCategory(categorySlug);
+    this.categoryService.loadCategories().subscribe({
+      next: () => {
+        this.route.params.subscribe(params => {
+          const categorySlug = params['categoryName'];
+          this.loadCategory(categorySlug);
 
-      // Check if sub-category filter is applied
-      this.route.queryParams.subscribe(queryParams => {
-        this.selectedSubCategory = queryParams['sub'] || null;
-        this.loadProducts(categorySlug, this.selectedSubCategory);
-      });
+          this.route.queryParams.subscribe(queryParams => {
+            this.selectedSubCategory = queryParams['sub'] || null;
+            this.loadProducts(categorySlug, this.selectedSubCategory);
+          });
+        });
+      },
+      error: () => {
+        this.errorMessage = 'Failed to load categories.';
+        this.loading = false;
+      }
     });
   }
 
   loadCategory(slug: string): void {
     this.category = this.categoryService.getCategoryBySlug(slug);
     if (!this.category) {
-      // Category not found, redirect to home
       this.router.navigate(['/']);
     }
   }
 
   loadProducts(categorySlug: string, subCategorySlug: string | null): void {
-    if (subCategorySlug) {
-      // Filter by sub-category
-      this.products = this.categoryService.getProductsBySubCategory(categorySlug, subCategorySlug);
-    } else {
-      // Show all products in category
-      this.products = this.categoryService.getProductsByCategory(categorySlug);
-    }
+    this.loading = true;
+    this.errorMessage = '';
+
+    const source = subCategorySlug
+      ? this.categoryService.getProductsBySubCategory(categorySlug, subCategorySlug)
+      : this.categoryService.getProductsByCategory(categorySlug);
+
+    source.subscribe({
+      next: (products) => {
+        this.products = products;
+        this.loading = false;
+      },
+      error: () => {
+        this.errorMessage = 'Failed to load products.';
+        this.loading = false;
+      }
+    });
   }
 
   filterBySubCategory(subCategorySlug: string): void {
     if (!this.category) return;
-    
+
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { sub: subCategorySlug },
@@ -64,20 +81,18 @@ export class CategoryComponent implements OnInit {
 
   clearFilter(): void {
     if (!this.category) return;
-    
+
     this.router.navigate(['/category', this.category.slug]);
   }
 
   addToCart(product: CategoryProduct): void {
-    // Convert CategoryProduct to CartItem format
-    // Using cart service with correct parameters
     this.cartService.addToCart(
       product.id,
       product.name,
       product.image,
       product.price,
-      10 // Default max stock for demo
-    );
+      product.stock ?? 99
+    ).subscribe(result => this.cartService.notifyAddResult(result, product.name));
   }
 
   viewProductDetail(productId: string): void {

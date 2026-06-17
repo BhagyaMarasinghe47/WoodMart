@@ -1,9 +1,11 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { CartService } from '../../core/services/cart.service';
+import { WishlistService } from '../../core/services/wishlist.service';
 import { User } from '../../core/models/user.model';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-navbar',
@@ -22,6 +24,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
   constructor(
     public authService: AuthService,
     private cartService: CartService,
+    public wishlistService: WishlistService,
     private router: Router
   ) { }
 
@@ -109,6 +112,11 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.showProfileDropdown = false;
   }
 
+  navigateToCheckout(): void {
+    this.router.navigate(['/customer/checkout']);
+    this.showProfileDropdown = false;
+  }
+
   navigateToUserManagement(): void {
     this.router.navigate(['/admin/users']);
     this.showProfileDropdown = false;
@@ -123,11 +131,57 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.authService.logout();
   }
 
+  navigateToProfile(): void {
+    this.router.navigate(['/profile']);
+    this.showProfileDropdown = false;
+  }
+
+  searchTerm = '';
+
+  onSearch(event?: KeyboardEvent): void {
+    if (event && event.key !== 'Enter') return;
+    const term = this.searchTerm.trim();
+    if (term) {
+      this.router.navigate(['/products'], { queryParams: { search: term } });
+    } else {
+      this.router.navigate(['/products']);
+    }
+    this.searchTerm = '';
+  }
+
   navigateToLogin(): void {
     this.router.navigate(['/login']);
   }
 
   navigateToRegister(): void {
     this.router.navigate(['/register']);
+  }
+
+  getFullName(): string {
+    if (!this.currentUser) return '';
+    return `${this.currentUser.firstName} ${this.currentUser.lastName}`.trim();
+  }
+
+  getInitials(): string {
+    if (!this.currentUser) return '?';
+    const f = this.currentUser.firstName?.[0] || '';
+    const l = this.currentUser.lastName?.[0] || '';
+    return (f + l).toUpperCase() || '?';
+  }
+
+  getAvatarUrl(): string {
+    const url = this.currentUser?.profileImageUrl;
+    if (!url) return '';
+    if (url.startsWith('http')) return url;
+    const base = environment.apiUrl.replace('/api', '');
+    return `${base}/${url}`;
+  }
+
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: Event): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.profile-menu')) {
+      this.showProfileDropdown = false;
+    }
   }
 }

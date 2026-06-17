@@ -105,10 +105,31 @@
       <button class="btn-primary" (click)="openProductForm()">Add New Product</button>
     </div>
 
+    <!-- Category filter pills -->
+    <div *ngIf="!loading && products.length > 0" class="category-filter-bar">
+      <button
+        class="cat-pill"
+        [class.active]="selectedProductCategory === ''"
+        (click)="selectedProductCategory = ''">
+        All <span class="cat-count">{{ products.length }}</span>
+      </button>
+      <button
+        *ngFor="let cat of productCategories"
+        class="cat-pill"
+        [class.active]="selectedProductCategory === cat"
+        (click)="selectedProductCategory = cat">
+        {{ cat }} <span class="cat-count">{{ productCountByCategory(cat) }}</span>
+      </button>
+    </div>
+
     <div *ngIf="loading" class="loading-message">Loading products...</div>
 
+    <div *ngIf="!loading && filteredProducts.length === 0 && products.length > 0" class="empty-message">
+      <p>No products in this category.</p>
+    </div>
+
     <div *ngIf="!loading" class="products-grid">
-      <div *ngFor="let product of products" class="product-card">
+      <div *ngFor="let product of filteredProducts" class="product-card">
         <img [src]="product.imageUrl" [alt]="product.name" class="product-image">
         <div class="product-details">
           <h3>{{ product.name }}</h3>
@@ -178,7 +199,24 @@
   <!-- Inventory Tracking Tab -->
   <div *ngIf="activeTab === 'inventory'" class="tab-content">
     <h2>Inventory Management</h2>
-    
+
+    <!-- Category filter pills -->
+    <div *ngIf="inventory.length > 0" class="category-filter-bar">
+      <button
+        class="cat-pill"
+        [class.active]="selectedInventoryCategory === ''"
+        (click)="selectedInventoryCategory = ''">
+        All <span class="cat-count">{{ inventory.length }}</span>
+      </button>
+      <button
+        *ngFor="let cat of inventoryCategories"
+        class="cat-pill"
+        [class.active]="selectedInventoryCategory === cat"
+        (click)="selectedInventoryCategory = cat">
+        {{ cat }} <span class="cat-count">{{ inventoryCountByCategory(cat) }}</span>
+      </button>
+    </div>
+
     <table class="data-table inventory-table">
       <thead>
         <tr>
@@ -192,7 +230,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let item of inventory" [class.low-stock-row]="isLowStock(item.availableQuantity)">
+        <tr *ngFor="let item of filteredInventory" [class.low-stock-row]="isLowStock(item.availableQuantity)">
           <td>{{ item.productName }}</td>
           <td>{{ item.category }}</td>
           <td>
@@ -228,6 +266,9 @@
     <div *ngIf="inventory.length === 0" class="empty-message">
       <p>No inventory data available.</p>
     </div>
+    <div *ngIf="inventory.length > 0 && filteredInventory.length === 0" class="empty-message">
+      <p>No items in this category.</p>
+    </div>
   </div>
 </div>
 
@@ -259,7 +300,7 @@
             <label>Subcategory</label>
             <select [(ngModel)]="productForm.subcategory" name="subcategory" [disabled]="!selectedCategory">
               <option value="">Select subcategory</option>
-              <option *ngFor="let subcat of selectedCategory?.subCategories || []" [value]="subcat">{{ subcat }}</option>
+              <option *ngFor="let subcat of selectedCategory?.subCategories || []" [value]="subcat.name">{{ subcat.name }}</option>
             </select>
           </div>
         </div>
@@ -292,12 +333,21 @@
 
         <div class="form-row">
           <div class="form-group">
-            <label>Dimensions (L × W × H)</label>
-            <input type="text" [(ngModel)]="productForm.dimensions" name="dimensions" placeholder="e.g., 72 × 36 × 30 inches">
+            <label>Dimensions (L × W × H) <span class="unit-hint">cm</span></label>
+            <div class="dim-inputs">
+              <input type="number" min="0" [(ngModel)]="dimL" name="dimL" placeholder="L">
+              <span class="dim-sep">×</span>
+              <input type="number" min="0" [(ngModel)]="dimW" name="dimW" placeholder="W">
+              <span class="dim-sep">×</span>
+              <input type="number" min="0" [(ngModel)]="dimH" name="dimH" placeholder="H">
+            </div>
           </div>
           <div class="form-group">
-            <label>Weight</label>
-            <input type="text" [(ngModel)]="productForm.weight" name="weight" placeholder="e.g., 85 lbs">
+            <label>Weight <span class="unit-hint">kg</span></label>
+            <div class="weight-input">
+              <input type="number" min="0" step="0.1" [(ngModel)]="weightKg" name="weightKg" placeholder="e.g., 38.5">
+              <span class="unit-badge">kg</span>
+            </div>
           </div>
         </div>
 
@@ -308,10 +358,22 @@
         </div>
 
         <div class="form-group full-width">
-          <label>Image URL</label>
-          <input type="text" [(ngModel)]="productForm.imageUrl" name="imageUrl" 
-                 (input)="onImageUrlChange(productForm.imageUrl!)"
-                 placeholder="https://...">
+          <label>Product Image</label>
+          <div class="image-upload-wrapper">
+            <input
+              type="file"
+              id="craftsmanImageUpload"
+              name="imageUpload"
+              accept="image/jpeg,image/png,image/webp"
+              (change)="onImageFileSelected($event)"
+              class="image-file-input">
+            <label for="craftsmanImageUpload" class="image-upload-label">
+              <span *ngIf="!imageUploading">Choose Image</span>
+              <span *ngIf="imageUploading">Uploading...</span>
+            </label>
+            <span class="image-hint">JPG, PNG or WebP — max 5 MB</span>
+          </div>
+          <div *ngIf="imageUploadError" class="image-upload-error">{{ imageUploadError }}</div>
           <div *ngIf="imagePreview" class="image-preview">
             <img [src]="imagePreview" alt="Preview">
           </div>

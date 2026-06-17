@@ -1,15 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../core/services/auth.service';
-import { VendorService } from '../../core/services/vendor.service';
+import { UserService } from '../../core/services/user.service';
 import { User, UserRole, ApprovalStatus } from '../../core/models/user.model';
+import { forkJoin } from 'rxjs';
+import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 interface UserDetails extends User {
+  location?: string;
   shopName?: string;
   shopRegNumber?: string;
   businessLicense?: string;
   taxId?: string;
-  location?: string;
-  city?: string;
   district?: string;
   postalCode?: string;
   specialization?: string;
@@ -30,6 +32,8 @@ export class UserManagementComponent implements OnInit {
   searchQuery = '';
   selectedUser: UserDetails | null = null;
   showDetailsModal = false;
+  loading = true;
+  errorMessage = '';
 
   UserRole = UserRole;
 
@@ -39,7 +43,9 @@ export class UserManagementComponent implements OnInit {
 
   constructor(
     private authService: AuthService,
-    private vendorService: VendorService
+    private userService: UserService,
+    private toast: ToastService,
+    private confirmDialog: ConfirmDialogService
   ) {}
 
   ngOnInit(): void {
@@ -47,196 +53,44 @@ export class UserManagementComponent implements OnInit {
   }
 
   loadAllUsers(): void {
-    // Load customers
-    this.customers = [
-      {
-        id: '1',
-        email: 'john.doe@email.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        role: UserRole.CUSTOMER,
-        approvalStatus: ApprovalStatus.APPROVED,
-        createdAt: new Date('2025-01-15'),
-        phone: '+94 71 234 5678',
-        address: '123 Main Street',
-        city: 'Colombo',
-        district: 'Colombo',
-        postalCode: '00100',
-        location: 'Colombo 3'
-      },
-      {
-        id: '2',
-        email: 'jane.smith@email.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        role: UserRole.CUSTOMER,
-        approvalStatus: ApprovalStatus.APPROVED,
-        createdAt: new Date('2025-01-10'),
-        phone: '+94 77 345 6789',
-        address: '456 Park Avenue',
-        city: 'Kandy',
-        district: 'Kandy',
-        postalCode: '20000',
-        location: 'Kandy City'
-      },
-      {
-        id: '3',
-        email: 'robert.wilson@email.com',
-        firstName: 'Robert',
-        lastName: 'Wilson',
-        role: UserRole.CUSTOMER,
-        approvalStatus: ApprovalStatus.APPROVED,
-        createdAt: new Date('2025-01-12'),
-        phone: '+94 76 456 7890',
-        address: '789 Lake Road',
-        city: 'Galle',
-        district: 'Galle',
-        postalCode: '80000',
-        location: 'Galle Fort'
-      }
-    ];
+    this.loading = true;
+    this.errorMessage = '';
 
-    // Load vendors
-    this.vendors = [
-      {
-        id: '4',
-        email: 'woodcraft@vendor.com',
-        firstName: 'Michael',
-        lastName: 'Anderson',
-        role: UserRole.VENDOR,
-        approvalStatus: ApprovalStatus.APPROVED,
-        createdAt: new Date('2024-12-01'),
-        phone: '+94 11 234 5678',
-        address: '15 Industrial Zone',
-        shopName: 'WoodCraft Suppliers',
-        shopRegNumber: 'WC-2024-001',
-        businessLicense: 'BL-567890',
-        taxId: 'TAX-123456',
-        city: 'Colombo',
-        district: 'Colombo',
-        postalCode: '01000',
-        location: 'Colombo 10'
+    forkJoin({
+      customers: this.userService.getUsersByRole(4),
+      vendors: this.userService.getUsersByRole(3),
+      craftsmen: this.userService.getUsersByRole(2)
+    }).subscribe({
+      next: ({ customers, vendors, craftsmen }) => {
+        this.customers = customers as UserDetails[];
+        this.vendors = vendors as UserDetails[];
+        this.craftsmen = craftsmen as UserDetails[];
+        this.allUsers = [...this.customers, ...this.vendors, ...this.craftsmen];
+        this.loading = false;
+        this.filterByTab(this.selectedTab);
       },
-      {
-        id: '5',
-        email: 'timbertrade@vendor.com',
-        firstName: 'Sarah',
-        lastName: 'Johnson',
-        role: UserRole.VENDOR,
-        approvalStatus: ApprovalStatus.APPROVED,
-        createdAt: new Date('2024-11-15'),
-        phone: '+94 81 345 6789',
-        address: '28 Commerce Street',
-        shopName: 'Timber Trade Co.',
-        shopRegNumber: 'TT-2024-002',
-        businessLicense: 'BL-678901',
-        taxId: 'TAX-234567',
-        city: 'Kandy',
-        district: 'Kandy',
-        postalCode: '20000',
-        location: 'Kandy Central'
-      },
-      {
-        id: '6',
-        email: 'premiumwood@vendor.com',
-        firstName: 'David',
-        lastName: 'Lee',
-        role: UserRole.VENDOR,
-        approvalStatus: ApprovalStatus.PENDING,
-        createdAt: new Date('2026-01-05'),
-        phone: '+94 91 456 7890',
-        address: '42 Trading Avenue',
-        shopName: 'Premium Wood Ltd.',
-        shopRegNumber: 'PW-2026-003',
-        businessLicense: 'BL-789012',
-        taxId: 'TAX-345678',
-        city: 'Galle',
-        district: 'Galle',
-        postalCode: '80000',
-        location: 'Galle City'
+      error: () => {
+        this.errorMessage = 'Failed to load users.';
+        this.loading = false;
       }
-    ];
-
-    // Load craftsmen
-    this.craftsmen = [
-      {
-        id: '7',
-        email: 'kamal.artisan@craftsman.com',
-        firstName: 'Kamal',
-        lastName: 'Perera',
-        role: UserRole.CRAFTSMAN,
-        approvalStatus: ApprovalStatus.APPROVED,
-        createdAt: new Date('2024-10-20'),
-        phone: '+94 71 567 8901',
-        address: '5 Workshop Lane',
-        specialization: 'Furniture Making',
-        experience: 15,
-        certifications: ['Master Craftsman', 'Traditional Woodwork'],
-        portfolio: 'https://kamalcrafts.com',
-        city: 'Colombo',
-        district: 'Colombo',
-        postalCode: '00600',
-        location: 'Nugegoda'
-      },
-      {
-        id: '8',
-        email: 'nimal.wood@craftsman.com',
-        firstName: 'Nimal',
-        lastName: 'Silva',
-        role: UserRole.CRAFTSMAN,
-        approvalStatus: ApprovalStatus.APPROVED,
-        createdAt: new Date('2024-09-15'),
-        phone: '+94 77 678 9012',
-        address: '12 Artisan Road',
-        specialization: 'Carving & Sculpture',
-        experience: 20,
-        certifications: ['Wood Carving Expert', 'Design Excellence'],
-        portfolio: 'https://nimalwood.lk',
-        city: 'Kandy',
-        district: 'Kandy',
-        postalCode: '20100',
-        location: 'Peradeniya'
-      },
-      {
-        id: '9',
-        email: 'pradeep.craft@craftsman.com',
-        firstName: 'Pradeep',
-        lastName: 'Fernando',
-        role: UserRole.CRAFTSMAN,
-        approvalStatus: ApprovalStatus.PENDING,
-        createdAt: new Date('2026-01-10'),
-        phone: '+94 76 789 0123',
-        address: '8 Creative Avenue',
-        specialization: 'Modern Furniture Design',
-        experience: 8,
-        certifications: ['Contemporary Design'],
-        portfolio: 'https://pradeepcrafts.com',
-        city: 'Galle',
-        district: 'Galle',
-        postalCode: '80100',
-        location: 'Hikkaduwa'
-      }
-    ];
-
-    this.allUsers = [...this.customers, ...this.vendors, ...this.craftsmen];
-    this.filterByTab(this.selectedTab);
+    });
   }
 
   filterByTab(role: UserRole): void {
     this.selectedTab = role;
-    
+
     switch (role) {
       case UserRole.CUSTOMER:
-        this.filteredUsers = this.customers;
+        this.filteredUsers = [...this.customers];
         break;
       case UserRole.VENDOR:
-        this.filteredUsers = this.vendors;
+        this.filteredUsers = [...this.vendors];
         break;
       case UserRole.CRAFTSMAN:
-        this.filteredUsers = this.craftsmen;
+        this.filteredUsers = [...this.craftsmen];
         break;
       default:
-        this.filteredUsers = this.allUsers;
+        this.filteredUsers = [...this.allUsers];
     }
 
     this.applySearch();
@@ -247,18 +101,34 @@ export class UserManagementComponent implements OnInit {
   }
 
   applySearch(): void {
+    let base: UserDetails[];
+
+    switch (this.selectedTab) {
+      case UserRole.CUSTOMER:
+        base = this.customers;
+        break;
+      case UserRole.VENDOR:
+        base = this.vendors;
+        break;
+      case UserRole.CRAFTSMAN:
+        base = this.craftsmen;
+        break;
+      default:
+        base = this.allUsers;
+    }
+
     if (!this.searchQuery.trim()) {
-      this.filterByTab(this.selectedTab);
+      this.filteredUsers = [...base];
       return;
     }
 
     const query = this.searchQuery.toLowerCase();
-    this.filteredUsers = this.filteredUsers.filter(user =>
+    this.filteredUsers = base.filter(user =>
       user.firstName.toLowerCase().includes(query) ||
       user.lastName.toLowerCase().includes(query) ||
       user.email.toLowerCase().includes(query) ||
       (user.phone && user.phone.includes(query)) ||
-      (user.shopName && user.shopName.toLowerCase().includes(query))
+      (user.city && user.city.toLowerCase().includes(query))
     );
   }
 
@@ -273,37 +143,60 @@ export class UserManagementComponent implements OnInit {
   }
 
   approveUser(userId: string): void {
-    const user = this.allUsers.find(u => u.id === userId);
-    if (user) {
-      user.approvalStatus = ApprovalStatus.APPROVED;
-      alert(`${user.firstName} ${user.lastName} has been approved!`);
-      this.filterByTab(this.selectedTab);
-    }
+    this.userService.approveUser(userId).subscribe({
+      next: (success) => {
+        if (success) {
+          this.toast.success('User approved successfully!');
+          this.loadAllUsers();
+          this.closeDetailsModal();
+        } else {
+          this.toast.error('Failed to approve user.');
+        }
+      }
+    });
   }
 
   rejectUser(userId: string): void {
     const user = this.allUsers.find(u => u.id === userId);
-    if (user) {
-      if (confirm(`Are you sure you want to reject ${user.firstName} ${user.lastName}?`)) {
-        user.approvalStatus = ApprovalStatus.REJECTED;
-        alert(`${user.firstName} ${user.lastName} has been rejected.`);
-        this.filterByTab(this.selectedTab);
-      }
+    if (!user) {
+      return;
     }
+
+    this.confirmDialog.confirm(`Reject ${user.firstName} ${user.lastName}?`, 'Reject', 'Cancel').then(confirmed => {
+      if (!confirmed) return;
+      this.userService.rejectUser(userId).subscribe({
+        next: (success) => {
+          if (success) {
+            this.toast.success(`${user.firstName} ${user.lastName} has been rejected.`);
+            this.loadAllUsers();
+            this.closeDetailsModal();
+          } else {
+            this.toast.error('Failed to reject user.');
+          }
+        }
+      });
+    });
   }
 
   deleteUser(userId: string): void {
     const user = this.allUsers.find(u => u.id === userId);
-    if (user) {
-      if (confirm(`Are you sure you want to delete ${user.firstName} ${user.lastName}? This action cannot be undone.`)) {
-        this.allUsers = this.allUsers.filter(u => u.id !== userId);
-        this.customers = this.customers.filter(u => u.id !== userId);
-        this.vendors = this.vendors.filter(u => u.id !== userId);
-        this.craftsmen = this.craftsmen.filter(u => u.id !== userId);
-        alert('User deleted successfully.');
-        this.filterByTab(this.selectedTab);
-      }
-    }
+    if (!user) return;
+
+    const message = `Permanently delete "${user.firstName} ${user.lastName}" (${user.email})?\n\nThis action cannot be undone.`;
+    this.confirmDialog.confirm(message, 'Delete', 'Cancel').then(confirmed => {
+      if (!confirmed) return;
+      this.userService.deleteUser(userId).subscribe({
+        next: (res) => {
+          this.toast.success(res.message || 'User deleted successfully.');
+          this.closeDetailsModal();
+          this.loadAllUsers();
+        },
+        error: (err) => {
+          const msg = err?.error?.message || 'Failed to delete user. Please try again.';
+          this.toast.error(msg);
+        }
+      });
+    });
   }
 
   getStatusClass(status: ApprovalStatus): string {
@@ -320,6 +213,6 @@ export class UserManagementComponent implements OnInit {
   }
 
   exportToCSV(): void {
-    alert('Export to CSV functionality will be implemented soon.');
+    this.toast.warning('Export to CSV functionality will be implemented soon.');
   }
 }

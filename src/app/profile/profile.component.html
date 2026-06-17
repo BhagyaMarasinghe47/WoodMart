@@ -1,0 +1,74 @@
+<div class="profile-page">
+  <div class="profile-container">
+    <h1 class="page-title">Profile Settings</h1>
+
+    <div class="profile-card">
+      <!-- Avatar Section -->
+      <div class="avatar-section">
+        <div class="avatar-wrapper">
+          <img *ngIf="avatarPreview" [src]="avatarPreview" alt="Profile" class="avatar-img">
+          <div *ngIf="!avatarPreview" class="avatar-initials">{{ getInitials() }}</div>
+          <label class="avatar-overlay" for="avatarInput" title="Change photo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          </label>
+          <input type="file" id="avatarInput" accept="image/jpeg,image/png,image/webp" (change)="onAvatarSelected($event)" style="display:none">
+        </div>
+        <div class="avatar-info">
+          <p class="avatar-name">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</p>
+          <p class="avatar-role">{{ currentUser?.role }}</p>
+          <p *ngIf="avatarUploading" class="avatar-uploading">Uploading...</p>
+          <p *ngIf="avatarError" class="avatar-error">{{ avatarError }}</p>
+          <p class="avatar-hint">Click the camera icon to change your profile photo</p>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- Form Section -->
+      <div class="form-section">
+        <h2 class="section-title">Personal Information</h2>
+
+        <div *ngIf="saveSuccess" class="alert alert-success">Profile updated successfully.</div>
+        <div *ngIf="saveError" class="alert alert-error">{{ saveError }}</div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="firstName">First Name</label>
+            <input id="firstName" type="text" [(ngModel)]="form.firstName" placeholder="First name">
+          </div>
+          <div class="form-group">
+            <label for="lastName">Last Name</label>
+            <input id="lastName" type="text" [(ngModel)]="form.lastName" placeholder="Last name">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" [value]="currentUser?.email" disabled class="disabled-field">
+          <span class="field-note">Email cannot be changed.</span>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input id="phone" type="tel" [(ngModel)]="form.phone" placeholder="e.g. 0771234567">
+          </div>
+          <div class="form-group">
+            <label for="city">City / Area</label>
+            <input id="city" type="text" [(ngModel)]="form.city" placeholder="e.g. Colombo">
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn-save" (click)="saveProfile()" [disabled]="saving">
+            {{ saving ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

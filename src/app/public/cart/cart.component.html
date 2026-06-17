@@ -1,13 +1,24 @@
 <div class="cart-container">
   <h1>Shopping Cart</h1>
 
-  <div *ngIf="cart.items.length === 0" class="empty-cart">
+  <div *ngIf="loginRequired" class="empty-cart guest-prompt">
+    <h2>Sign in to view your cart</h2>
+    <p>Your cart is saved to your account when you are logged in as a customer.</p>
+    <button class="btn-primary" (click)="goToLogin()">Log In</button>
+    <button class="btn-continue" (click)="continueShopping()">Continue Shopping</button>
+  </div>
+
+  <div *ngIf="loading" class="empty-cart">
+    <p>Loading your cart...</p>
+  </div>
+
+  <div *ngIf="!loginRequired && !loading && cart.items.length === 0" class="empty-cart">
     <h2>Your cart is empty</h2>
     <p>Add some products to get started!</p>
     <button class="btn-primary" (click)="continueShopping()">Continue Shopping</button>
   </div>
 
-  <div *ngIf="cart.items.length > 0" class="cart-content">
+  <div *ngIf="!loginRequired && !loading && cart.items.length > 0" class="cart-content">
     <div class="cart-items">
       <div *ngFor="let item of cart.items" class="cart-item">
         <img [src]="item.productImage" [alt]="item.productName">
@@ -16,15 +27,15 @@
           <p class="item-price">Rs. {{ item.price.toLocaleString() }}</p>
         </div>
         <div class="quantity-controls">
-          <button (click)="updateQuantity(item.productId, item.quantity - 1)">-</button>
+          <button (click)="updateQuantity(item, item.quantity - 1)">-</button>
           <span class="quantity">{{ item.quantity }}</span>
-          <button (click)="updateQuantity(item.productId, item.quantity + 1)" 
+          <button (click)="updateQuantity(item, item.quantity + 1)" 
                   [disabled]="item.quantity >= item.maxStock">+</button>
         </div>
         <div class="item-subtotal">
           Rs. {{ (item.price * item.quantity).toLocaleString() }}
         </div>
-        <button class="btn-remove" (click)="removeItem(item.productId)">
+        <button class="btn-remove" (click)="removeItem(item)">
           ✕
         </button>
       </div>

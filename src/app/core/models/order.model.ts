@@ -17,13 +17,24 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  orderNumber?: string;
   customerId: string;
   customerName: string;
   items: OrderItem[];
   totalAmount: number;
   status: OrderStatus;
   shippingAddress: string;
+  deliveryCity?: string;
+  deliveryState?: string;
+  deliveryPostalCode?: string;
+  deliveryCountry?: string;
+  notes?: string;
   paymentMethod: string;
+  paymentStatus?: string;
+  paymentDate?: Date;
+  paymentAmount?: number;
+  paymentTransactionId?: string;
+  estimatedDelivery?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

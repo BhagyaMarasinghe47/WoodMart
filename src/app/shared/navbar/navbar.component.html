@@ -6,32 +6,49 @@
       <span class="logo">WoodMart</span>
     </div>
 
+    <!-- Global Search Bar (guests & customers only) -->
+    @if (isGuest() || isCustomer()) {
+      <div class="navbar-search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"></circle>
+          <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input
+          type="text"
+          [(ngModel)]="searchTerm"
+          (keydown)="onSearch($event)"
+          placeholder="Search furniture..."
+          class="navbar-search-input">
+        <button class="navbar-search-btn" (click)="onSearch()">Search</button>
+      </div>
+    }
+
     <!-- Main Navigation Menu -->
     <div class="navbar-menu">
       <!-- HOME LINK - Only for guests and customers -->
       @if (isGuest() || isCustomer()) {
         <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
       }
-      
+
       <!-- VENDOR DASHBOARD - Before Products -->
       @if (isVendor()) {
         <a routerLink="/vendor/dashboard" routerLinkActive="active" class="dashboard-link">
           Vendor Dashboard
         </a>
       }
-      
+
       <!-- CRAFTSMAN DASHBOARD - Before Products -->
       @if (isCraftsman()) {
         <a routerLink="/craftsman/dashboard" routerLinkActive="active" class="dashboard-link">
           Craftsman Dashboard
         </a>
       }
-      
+
       <!-- PRODUCTS LINK - Visible to guests, customers, vendors, and admin (NOT craftsmen) -->
       @if (isGuest() || isCustomer() || isVendor() || isAdmin()) {
         <a routerLink="/products" routerLinkActive="active">Products</a>
       }
-      
+
       <!-- SHOPS LINK - Visible to guests, customers, and admin (NOT vendors or craftsmen) -->
       @if (isGuest() || isCustomer() || isAdmin()) {
         <a routerLink="/shops" routerLinkActive="active">Shops</a>
@@ -46,13 +63,23 @@
             <span class="cart-badge">{{ cartItemCount }}</span>
           }
         </a>
-        
+
         <!-- Login button -->
         <button class="btn-login" (click)="navigateToLogin()">Login</button>
       }
 
       <!-- CUSTOMER - Logged in as customer -->
       @if (isCustomer()) {
+        <!-- Wishlist icon -->
+        <a routerLink="/wishlist" routerLinkActive="active" class="cart-link wishlist-link" title="My Wishlist">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+          @if (wishlistService.wishlistCount > 0) {
+            <span class="cart-badge">{{ wishlistService.wishlistCount }}</span>
+          }
+        </a>
+
         <!-- Cart for customers -->
         <a routerLink="/cart" routerLinkActive="active" class="cart-link">
           Cart
@@ -60,19 +87,26 @@
             <span class="cart-badge">{{ cartItemCount }}</span>
           }
         </a>
-        
+
         <!-- My Orders link -->
-        <a routerLink="/customer/dashboard" routerLinkActive="active">My Orders</a>
-        
+        <a routerLink="/customer/dashboard" routerLinkActive="active" class="dashboard-link">My Orders</a>
+
         <!-- Profile dropdown -->
         <div class="profile-menu">
           <button class="profile-button" (click)="toggleProfileDropdown()">
-            <span class="profile-icon">👤</span>
-            {{ currentUser?.firstName }}
+            <span class="nav-avatar" [class.has-image]="getAvatarUrl()">
+              @if (getAvatarUrl()) {
+                <img [src]="getAvatarUrl()" [alt]="getFullName()" class="nav-avatar-img">
+              } @else {
+                {{ getInitials() }}
+              }
+            </span>
+            <span class="nav-full-name">{{ getFullName() }}</span>
             <span class="dropdown-arrow">▼</span>
           </button>
           @if (showProfileDropdown) {
             <div class="profile-dropdown">
+              <a routerLink="/profile" (click)="showProfileDropdown = false" class="dropdown-link">Profile Settings</a>
               <button (click)="logout()">Logout</button>
             </div>
           }
@@ -84,12 +118,19 @@
         <!-- Profile dropdown -->
         <div class="profile-menu">
           <button class="profile-button" (click)="toggleProfileDropdown()">
-            <span class="profile-icon">🏪</span>
-            {{ currentUser?.firstName }}
+            <span class="nav-avatar" [class.has-image]="getAvatarUrl()">
+              @if (getAvatarUrl()) {
+                <img [src]="getAvatarUrl()" [alt]="getFullName()" class="nav-avatar-img">
+              } @else {
+                {{ getInitials() }}
+              }
+            </span>
+            <span class="nav-full-name">{{ getFullName() }}</span>
             <span class="dropdown-arrow">▼</span>
           </button>
           @if (showProfileDropdown) {
             <div class="profile-dropdown">
+              <a routerLink="/profile" (click)="showProfileDropdown = false" class="dropdown-link">Profile Settings</a>
               <button (click)="logout()">Logout</button>
             </div>
           }
@@ -101,12 +142,19 @@
         <!-- Profile dropdown -->
         <div class="profile-menu">
           <button class="profile-button" (click)="toggleProfileDropdown()">
-            <span class="profile-icon">🔨</span>
-            {{ currentUser?.firstName }}
+            <span class="nav-avatar" [class.has-image]="getAvatarUrl()">
+              @if (getAvatarUrl()) {
+                <img [src]="getAvatarUrl()" [alt]="getFullName()" class="nav-avatar-img">
+              } @else {
+                {{ getInitials() }}
+              }
+            </span>
+            <span class="nav-full-name">{{ getFullName() }}</span>
             <span class="dropdown-arrow">▼</span>
           </button>
           @if (showProfileDropdown) {
             <div class="profile-dropdown">
+              <a routerLink="/profile" (click)="showProfileDropdown = false" class="dropdown-link">Profile Settings</a>
               <button (click)="logout()">Logout</button>
             </div>
           }
@@ -119,21 +167,28 @@
         <a routerLink="/admin/dashboard" routerLinkActive="active" class="dashboard-link">
           Admin Dashboard
         </a>
-        
+
         <!-- User Management link -->
         <a routerLink="/admin/user-management" routerLinkActive="active" class="dashboard-link">
           User Management
         </a>
-        
+
         <!-- Profile dropdown -->
         <div class="profile-menu">
           <button class="profile-button" (click)="toggleProfileDropdown()">
-            <span class="profile-icon">⚙️</span>
-            Admin
+            <span class="nav-avatar" [class.has-image]="getAvatarUrl()">
+              @if (getAvatarUrl()) {
+                <img [src]="getAvatarUrl()" [alt]="getFullName()" class="nav-avatar-img">
+              } @else {
+                {{ getInitials() }}
+              }
+            </span>
+            <span class="nav-full-name">{{ getFullName() }}</span>
             <span class="dropdown-arrow">▼</span>
           </button>
           @if (showProfileDropdown) {
             <div class="profile-dropdown">
+              <a routerLink="/profile" (click)="showProfileDropdown = false" class="dropdown-link">Profile Settings</a>
               <button (click)="logout()">Logout</button>
             </div>
           }

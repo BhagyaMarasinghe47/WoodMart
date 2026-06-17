@@ -91,7 +91,7 @@
               <div class="subcategory">{{ product.subcategory }}</div>
             </div>
           </td>
-          <td>Rs {{ product.retailPrice.toLocaleString() }}</td>
+          <td>Rs. {{product.retailPrice.toLocaleString() }}</td>
           <td>
             <span [class.out-of-stock]="product.stock === 0">
               {{ product.stock }}
@@ -200,11 +200,11 @@
               </div>
               <div class="info-item">
                 <label>Retail Price:</label>
-                <span class="price">Rs {{ selectedProduct.retailPrice.toLocaleString() }}</span>
+                <span class="price">Rs. {{selectedProduct.retailPrice.toLocaleString() }}</span>
               </div>
               <div class="info-item">
                 <label>Wholesale Price:</label>
-                <span class="price">Rs {{ selectedProduct.wholesalePrice.toLocaleString() }}</span>
+                <span class="price">Rs. {{selectedProduct.wholesalePrice.toLocaleString() }}</span>
               </div>
               <div class="info-item">
                 <label>Stock:</label>

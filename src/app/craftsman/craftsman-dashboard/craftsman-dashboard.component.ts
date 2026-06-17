@@ -1,14 +1,17 @@
 import { Component, OnInit } from '@angular/core';
+import { environment } from '../../../environments/environment';
 import { AuthService } from '../../core/services/auth.service';
 import { CategoryService, Category } from '../../core/services/category.service';
-import { 
-  CraftsmanService, 
-  DashboardStats, 
-  WholesaleProduct, 
-  VendorOrder, 
+import { ImageUploadService } from '../../core/services/image-upload.service';
+import { ToastService } from '../../core/services/toast.service';
+import {
+  CraftsmanService,
+  DashboardStats,
+  WholesaleProduct,
+  VendorOrder,
   InventoryItem,
   OrderStatus,
-  ProductStatus 
+  ProductStatus
 } from '../../core/services/craftsman.service';
 
 @Component({
@@ -46,8 +49,14 @@ export class CraftsmanDashboardComponent implements OnInit {
     status: ProductStatus.ACTIVE
   };
   imagePreview: string = '';
+  imageUploading = false;
+  imageUploadError = '';
   showDeleteConfirm = false;
   productToDelete: string | null = null;
+  dimL: number | null = null;
+  dimW: number | null = null;
+  dimH: number | null = null;
+  weightKg: number | null = null;
 
   // Orders
   orders: VendorOrder[] = [];
@@ -58,6 +67,9 @@ export class CraftsmanDashboardComponent implements OnInit {
     status: OrderStatus.PENDING,
     expectedDeliveryDate: ''
   };
+
+  selectedProductCategory = '';
+  selectedInventoryCategory = '';
 
   // Inventory
   inventory: InventoryItem[] = [];
@@ -71,7 +83,9 @@ export class CraftsmanDashboardComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private craftsmanService: CraftsmanService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private imageUploadService: ImageUploadService,
+    private toast: ToastService
   ) {}
 
   ngOnInit(): void {
@@ -82,26 +96,34 @@ export class CraftsmanDashboardComponent implements OnInit {
   loadDashboardData(): void {
     this.loading = true;
 
-    this.craftsmanService.getDashboardStats().subscribe(stats => {
-      this.stats = stats;
+    this.craftsmanService.getDashboardStats().subscribe({
+      next: stats => { this.stats = stats; },
+      error: () => {}
     });
 
-    this.craftsmanService.getWholesaleProducts().subscribe(products => {
-      this.products = products;
+    this.craftsmanService.getWholesaleProducts().subscribe({
+      next: products => {
+        this.products = products;
+        this.loading = false;
+      },
+      error: () => { this.loading = false; }
     });
 
-    this.craftsmanService.getVendorOrders().subscribe(orders => {
-      this.orders = orders;
+    this.craftsmanService.getVendorOrders().subscribe({
+      next: orders => { this.orders = orders; },
+      error: () => {}
     });
 
-    this.craftsmanService.getInventory().subscribe(inventory => {
-      this.inventory = inventory;
-      this.loading = false;
+    this.craftsmanService.getInventory().subscribe({
+      next: inventory => { this.inventory = inventory; },
+      error: () => {}
     });
   }
 
   loadCategories(): void {
-    this.categories = this.categoryService.getAllCategories();
+    this.categoryService.loadCategories().subscribe(categories => {
+      this.categories = categories;
+    });
   }
 
   switchTab(tab: 'overview' | 'products' | 'orders' | 'inventory'): void {
@@ -119,6 +141,8 @@ export class CraftsmanDashboardComponent implements OnInit {
       if (category) {
         this.selectedCategory = category;
       }
+      this.parseDimensions(product.dimensions);
+      this.weightKg = product.weight ? (parseFloat(product.weight) || null) : null;
     } else {
       this.resetProductForm();
     }
@@ -146,6 +170,23 @@ export class CraftsmanDashboardComponent implements OnInit {
       status: ProductStatus.ACTIVE
     };
     this.imagePreview = '';
+    this.dimL = null;
+    this.dimW = null;
+    this.dimH = null;
+    this.weightKg = null;
+  }
+
+  parseDimensions(dim?: string): void {
+    if (!dim) { this.dimL = null; this.dimW = null; this.dimH = null; return; }
+    const parts = dim.split(/[×x]/i).map(p => parseFloat(p.trim()));
+    this.dimL = isNaN(parts[0]) ? null : parts[0];
+    this.dimW = isNaN(parts[1]) ? null : parts[1];
+    this.dimH = isNaN(parts[2]) ? null : parts[2];
+  }
+
+  composeDimensions(): string {
+    if (this.dimL == null && this.dimW == null && this.dimH == null) return '';
+    return `${this.dimL ?? ''} × ${this.dimW ?? ''} × ${this.dimH ?? ''} cm`.trim();
   }
 
   onCategoryChange(categorySlug: string): void {
@@ -154,28 +195,52 @@ export class CraftsmanDashboardComponent implements OnInit {
     this.productForm.subcategory = '';
   }
 
-  onImageUrlChange(url: string): void {
-    this.productForm.imageUrl = url;
-    this.imagePreview = url;
+  onImageFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files?.length) return;
+
+    const file = input.files[0];
+    this.imageUploading = true;
+    this.imageUploadError = '';
+
+    this.imageUploadService.uploadImage(file).subscribe({
+      next: (res) => {
+        this.productForm.imageUrl = res.imageUrl;
+        const baseUrl = environment.apiUrl.replace('/api', '');
+        this.imagePreview = `${baseUrl}/${res.imageUrl}`;
+        this.imageUploading = false;
+      },
+      error: () => {
+        this.imageUploadError = 'Image upload failed. Please try again.';
+        this.imageUploading = false;
+      }
+    });
   }
 
   saveProduct(): void {
     const currentUser = this.authService.currentUserValue;
     if (!currentUser) return;
 
-    if (!this.productForm.name || !this.productForm.category || 
+    if (!this.productForm.name || !this.productForm.category ||
         !this.productForm.wholesalePrice || this.productForm.availableQuantity === undefined) {
-      alert('Please fill in all required fields');
+      this.toast.warning('Please fill in all required fields.');
       return;
     }
 
+    this.productForm.dimensions = this.composeDimensions();
+    this.productForm.weight = this.weightKg != null ? `${this.weightKg} kg` : '';
+
     if (this.editingProduct) {
       this.craftsmanService.updateWholesaleProduct(this.editingProduct.id, this.productForm as WholesaleProduct)
-        .subscribe(success => {
-          if (success) {
+        .subscribe({
+          next: () => {
             this.loadDashboardData();
             this.closeProductForm();
-            alert('Product updated successfully!');
+            this.toast.success('Product updated successfully!');
+          },
+          error: (err) => {
+            const msg = err?.error?.message || 'Failed to update product. Please try again.';
+            this.toast.error(msg);
           }
         });
     } else {
@@ -187,17 +252,23 @@ export class CraftsmanDashboardComponent implements OnInit {
         wholesalePrice: this.productForm.wholesalePrice!,
         availableQuantity: this.productForm.availableQuantity!,
         material: this.productForm.material || '',
-        dimensions: this.productForm.dimensions,
-        weight: this.productForm.weight,
+        dimensions: this.productForm.dimensions || undefined,
+        weight: this.productForm.weight || undefined,
         imageUrl: this.productForm.imageUrl || 'https://images.unsplash.com/photo-1617806118233-18e1de247200?w=500',
         status: this.productForm.status || ProductStatus.ACTIVE,
         craftsmanId: currentUser.id
       };
 
-      this.craftsmanService.addWholesaleProduct(newProduct).subscribe(product => {
-        this.loadDashboardData();
-        this.closeProductForm();
-        alert('Product added successfully!');
+      this.craftsmanService.addWholesaleProduct(newProduct).subscribe({
+        next: () => {
+          this.loadDashboardData();
+          this.closeProductForm();
+          this.toast.success('Product added successfully!');
+        },
+        error: (err) => {
+          const msg = err?.error?.message || 'Failed to add product. Please try again.';
+          this.toast.error(msg);
+        }
       });
     }
   }
@@ -214,11 +285,15 @@ export class CraftsmanDashboardComponent implements OnInit {
 
   deleteProduct(): void {
     if (this.productToDelete) {
-      this.craftsmanService.deleteWholesaleProduct(this.productToDelete).subscribe(success => {
-        if (success) {
+      this.craftsmanService.deleteWholesaleProduct(this.productToDelete).subscribe({
+        next: () => {
           this.loadDashboardData();
           this.cancelDelete();
-          alert('Product deleted successfully!');
+          this.toast.success('Product deleted successfully!');
+        },
+        error: (err) => {
+          const msg = err?.error?.message || 'Failed to delete product. Please try again.';
+          this.toast.error(msg);
         }
       });
     }
@@ -254,14 +329,18 @@ export class CraftsmanDashboardComponent implements OnInit {
         new Date(this.orderForm.expectedDeliveryDate) : undefined;
       
       this.craftsmanService.updateOrderStatus(
-        this.editingOrder.id, 
+        this.editingOrder.id,
         this.orderForm.status,
         expectedDate
-      ).subscribe(success => {
-        if (success) {
+      ).subscribe({
+        next: () => {
           this.loadDashboardData();
           this.closeOrderModal();
-          alert('Order updated successfully!');
+          this.toast.success('Order updated successfully!');
+        },
+        error: (err) => {
+          const msg = err?.error?.message || 'Failed to update order. Please try again.';
+          this.toast.error(msg);
         }
       });
     }
@@ -305,6 +384,32 @@ export class CraftsmanDashboardComponent implements OnInit {
 
   isLowStock(quantity: number): boolean {
     return quantity < 5;
+  }
+
+  get productCategories(): string[] {
+    return [...new Set(this.products.map(p => p.category).filter(Boolean))].sort();
+  }
+
+  get filteredProducts(): WholesaleProduct[] {
+    if (!this.selectedProductCategory) return this.products;
+    return this.products.filter(p => p.category === this.selectedProductCategory);
+  }
+
+  productCountByCategory(cat: string): number {
+    return this.products.filter(p => p.category === cat).length;
+  }
+
+  get inventoryCategories(): string[] {
+    return [...new Set(this.inventory.map(i => i.category).filter(Boolean))].sort();
+  }
+
+  get filteredInventory(): InventoryItem[] {
+    if (!this.selectedInventoryCategory) return this.inventory;
+    return this.inventory.filter(i => i.category === this.selectedInventoryCategory);
+  }
+
+  inventoryCountByCategory(cat: string): number {
+    return this.inventory.filter(i => i.category === cat).length;
   }
 
   logout(): void {

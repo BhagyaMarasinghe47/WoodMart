@@ -61,13 +61,12 @@
   <section class="shop-look-section">
     <h2>Shop the Look</h2>
     <div class="shop-look-grid">
-      <div class="look-card" *ngFor="let look of shopTheLook" (click)="viewCategory(look.category)">
-        <div class="look-image-container">
-          <img [src]="look.imageUrl" [alt]="look.title">
-          <div class="look-overlay">
-            <h3 class="look-title">{{ look.title }}</h3>
-            <button class="btn-shop-look">SHOP THE LOOK</button>
-          </div>
+      <div class="look-card" *ngFor="let look of shopTheLook"
+           [style.background-image]="'url(' + look.imageUrl + ')'"
+           (click)="viewCategory(look.category)">
+        <div class="look-overlay">
+          <h3 class="look-title">{{ look.title }}</h3>
+          <button class="btn-shop-look">SHOP THE LOOK</button>
         </div>
       </div>
     </div>
@@ -77,19 +76,19 @@
   <section class="info-section">
     <div class="info-grid">
       <div class="info-card">
-        <h3>🎨 Handcrafted</h3>
+        <h3>Handcrafted</h3>
         <p>Every product is carefully crafted by skilled artisans</p>
       </div>
       <div class="info-card">
-        <h3>🌱 Sustainable</h3>
+        <h3>Sustainable</h3>
         <p>We use eco-friendly and sustainable materials</p>
       </div>
       <div class="info-card">
-        <h3>🚚 Fast Shipping</h3>
+        <h3>Fast Shipping</h3>
         <p>Quick and reliable delivery to your doorstep</p>
       </div>
       <div class="info-card">
-        <h3>✅ Quality Guaranteed</h3>
+        <h3>Quality Guaranteed</h3>
         <p>100% satisfaction guaranteed on all products</p>
       </div>
     </div>

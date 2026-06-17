@@ -5,6 +5,8 @@
 
   <div *ngIf="loading" class="loading">Loading...</div>
 
+  <div *ngIf="errorMessage" class="alert alert-error">{{ errorMessage }}</div>
+
   <div *ngIf="!loading" class="dashboard-content">
     <!-- Statistics Cards -->
     <div class="stats-grid">
@@ -18,7 +20,7 @@
       </div>
       <div class="stat-card">
         <h3>Total Revenue</h3>
-        <p class="stat-value">${{ statistics.revenue?.toFixed(2) }}</p>
+        <p class="stat-value">Rs. {{ statistics.revenue.toLocaleString() }}</p>
       </div>
       <div class="stat-card">
         <h3>Pending Approvals</h3>

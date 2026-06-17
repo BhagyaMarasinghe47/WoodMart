@@ -1,6 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ProductService } from '../../core/services/product.service';
 import { Product } from '../../core/models/product.model';
+import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 
 export enum ProductStatus {
   PENDING = 'PENDING',
@@ -38,7 +40,7 @@ export class ProductManagementComponent implements OnInit {
   rejectedProducts: ProductWithStatus[] = [];
   disabledProducts: ProductWithStatus[] = [];
 
-  constructor(private productService: ProductService) {}
+  constructor(private productService: ProductService, private toast: ToastService, private confirmDialog: ConfirmDialogService) {}
 
   ngOnInit(): void {
     this.loadProducts();
@@ -210,7 +212,7 @@ export class ProductManagementComponent implements OnInit {
     if (product) {
       product.status = ProductStatus.APPROVED;
       product.rejectionReason = undefined;
-      alert(`${product.name} has been approved!`);
+      this.toast.success(`${product.name} has been approved!`);
       this.categorizeProducts();
       this.filterByTab(this.selectedTab);
       this.closeDetailsModal();
@@ -231,7 +233,7 @@ export class ProductManagementComponent implements OnInit {
 
   rejectProduct(): void {
     if (!this.rejectionReason.trim()) {
-      alert('Please provide a rejection reason');
+      this.toast.warning('Please provide a rejection reason.');
       return;
     }
 
@@ -240,7 +242,7 @@ export class ProductManagementComponent implements OnInit {
       if (product) {
         product.status = ProductStatus.REJECTED;
         product.rejectionReason = this.rejectionReason;
-        alert(`${product.name} has been rejected.`);
+        this.toast.success(`${product.name} has been rejected.`);
         this.categorizeProducts();
         this.filterByTab(this.selectedTab);
         this.closeRejectModal();
@@ -251,22 +253,22 @@ export class ProductManagementComponent implements OnInit {
 
   disableProduct(productId: string): void {
     const product = this.allProducts.find(p => p.id === productId);
-    if (product) {
-      if (confirm(`Are you sure you want to disable ${product.name}?`)) {
-        product.status = ProductStatus.DISABLED;
-        alert(`${product.name} has been disabled.`);
-        this.categorizeProducts();
-        this.filterByTab(this.selectedTab);
-        this.closeDetailsModal();
-      }
-    }
+    if (!product) return;
+    this.confirmDialog.confirm(`Disable "${product.name}"?`, 'Disable', 'Cancel').then(confirmed => {
+      if (!confirmed) return;
+      product.status = ProductStatus.DISABLED;
+      this.toast.success(`${product.name} has been disabled.`);
+      this.categorizeProducts();
+      this.filterByTab(this.selectedTab);
+      this.closeDetailsModal();
+    });
   }
 
   enableProduct(productId: string): void {
     const product = this.allProducts.find(p => p.id === productId);
     if (product) {
       product.status = ProductStatus.APPROVED;
-      alert(`${product.name} has been enabled.`);
+      this.toast.success(`${product.name} has been enabled.`);
       this.categorizeProducts();
       this.filterByTab(this.selectedTab);
       this.closeDetailsModal();
